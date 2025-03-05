@@ -1,6 +1,7 @@
 import os
 import argparse
 import tempfile
+from pathlib import Path
 from tools.downloader.download import download_audio, download_video
 from tools.processor.spleeter_processor import extract_stems
 
@@ -21,62 +22,74 @@ def main():
     parser.add_argument("-a", "--audio", action="store_true", help="Download Audio")
     parser.add_argument("-s", "--stems", action="store_true", help="Download Audio & Extract Stems")
     parser.add_argument("-o", "--output-dir", dest="output_dir", help="Specify output directory")
+    parser.add_argument("-n", "--num-stems", dest="num_stems", type=int, default=2, 
+                       choices=[2, 4, 5], help="Number of stems to extract (2, 4, or 5)")
     
     options = parser.parse_args()
     
-    # Determine the output directory.
-    # If not provided, default to the user's Downloads folder.
+    # Determine the output directory (default: Downloads folder)
     output_dir = options.output_dir if options.output_dir else os.path.join(os.path.expanduser("~"), "Downloads")
     
     if options.audio:
-        print("🎵 Downloading audio...")
+        print("Downloading audio...")
         audio_file = download_audio(options.link, output_dir)
         if audio_file and os.path.exists(audio_file):
-            print(f"✅ Audio saved at: {audio_file}")
+            print(f"Audio saved at: {audio_file}")
         else:
-            print("❌ Audio download failed.")
+            print("Audio download failed.")
     
     elif options.video:
-        print("🎥 Downloading video...")
+        print("Downloading video...")
         video_file = download_video(options.link, output_dir)
-        print(f"✅ Video saved at: {video_file}")
+        if video_file and os.path.exists(video_file):
+            print(f"Video saved at: {video_file}")
+        else:
+            print("Video download failed.")
     
     elif options.stems:
-        print("🎵 Downloading audio for stem separation...")
+        print("Downloading audio for stem separation...")
         
-        # Use OS-managed temporary files/directories for stem separation.
-        temp_audio_path = tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
-        temp_output_dir = tempfile.mkdtemp(prefix="spleeter_stems_")
+        # Use a well-defined temp directory for download only
+        temp_audio_dir = tempfile.gettempdir()  
         
         try:
-            print(f"⬇️ Downloading audio to: {temp_audio_path} ...")
-            final_audio_path = download_audio(options.link, temp_audio_path)
+            print(f"Downloading audio to: {temp_audio_dir} ...")
+            final_audio_path = download_audio(options.link, temp_audio_dir)
             
-            # Ensure the file exists and is not empty.
+            # Ensure the file exists and is not empty
             if not final_audio_path or not os.path.exists(final_audio_path) or os.path.getsize(final_audio_path) == 0:
-                raise ValueError("❌ Download failed or file is empty.")
+                raise ValueError("Download failed or file is empty.")
             
-            print(f"✅ Audio downloaded to temp file: {final_audio_path}")
+            print(f"Audio downloaded to temp file: {final_audio_path}")
             
-            # Extract stems using Spleeter.
-            print("🎛️ Processing audio with Spleeter...")
-            extract_stems(final_audio_path, temp_output_dir, stem_number=2)
-            print(f"✅ Stems saved at: {temp_output_dir}")
+            # Get the filename without extension to use as output directory name
+            filename = os.path.splitext(os.path.basename(final_audio_path))[0]
+            stems_output_dir = os.path.join(output_dir, f"{filename}_stems")
+            os.makedirs(stems_output_dir, exist_ok=True)
+            
+            # Extract stems using Spleeter (defaulting to 4 stems)
+            print("Processing audio with Spleeter...")
+            extract_stems(
+                final_audio_path, 
+                stems_output_dir, 
+                stem_number=4
+            )
+            # Don't repeat the success message, it's already printed in extract_stems()
         except Exception as e:
-            print(f"❌ Error during processing: {e}")
+            print(f"Error during processing: {e}")
         finally:
-            # Cleanup the temporary audio file.
-            if os.path.exists(temp_audio_path):
-                os.remove(temp_audio_path)
-                print("🗑️ Temporary audio file removed.")
+            # Cleanup the temporary audio file
+            if final_audio_path and os.path.exists(final_audio_path):
+                os.remove(final_audio_path)
+                print("Temporary audio file removed.")
     else:
         # Default to audio download if no option is selected
-        print("🎵 Downloading audio (default)...")
+        print("Downloading audio (default)...")
         audio_file = download_audio(options.link, output_dir)
         if audio_file and os.path.exists(audio_file):
-            print(f"✅ Audio saved at: {audio_file}")
+            print(f"Audio saved at: {audio_file}")
         else:
-            print("❌ Audio download failed.")
+            print("Audio download failed.")
 
 if __name__ == "__main__":
     main()
