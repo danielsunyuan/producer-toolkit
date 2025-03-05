@@ -51,13 +51,22 @@ def download_audio(url, output_path=None):
         str: Path to the downloaded WAV file.
     """
     if output_path is None:
-        output_path = '%(title)s'  # No .wav extension
+        output_path = '%(title)s'  # Without extension
+        # Build the final path for the return value
+        return_path = '%(title)s.wav'
     elif os.path.isdir(output_path):
-        output_path = os.path.join(output_path, '%(title)s')  # No .wav extension
+        # If output_path is a directory, build the output path
+        output_path = os.path.join(output_path, '%(title)s')
+        # And store the directory for the return value
+        output_dir = output_path
+        return_path = output_path + '.wav'
+    else:
+        # If a specific filename was given
+        return_path = output_path + '.wav' if not output_path.endswith('.wav') else output_path
 
     ydl_opts = {
         'format': 'bestaudio[ext=m4a]/bestaudio/best',  # Best available audio
-        'outtmpl': output_path,  # yt-dlp appends .wav automatically
+        'outtmpl': output_path,  # Output template
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',  # Convert to WAV
             'preferredcodec': 'wav',
@@ -72,9 +81,14 @@ def download_audio(url, output_path=None):
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+        info_dict = ydl.extract_info(url, download=True)
+        # Get the actual title to build the correct return path
+        if info_dict and 'title' in info_dict:
+            # Replace the template with the actual title
+            if '%(title)s' in return_path:
+                return_path = return_path.replace('%(title)s', info_dict['title'])
 
-    return output_path
+    return return_path
 
 
 def test():

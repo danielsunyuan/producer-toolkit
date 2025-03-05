@@ -70,7 +70,13 @@ def main():
                 os.remove(temp_audio_path)
                 print("🗑️ Temporary audio file removed.")
     else:
-        print("⚠️ No valid option selected. Use -a for audio, -v for video, or -s for stem separation.")
+        # Default to audio download if no option is selected
+        print("🎵 Downloading audio (default)...")
+        audio_file = download_audio(options.link, output_dir)
+        if audio_file and os.path.exists(audio_file):
+            print(f"✅ Audio saved at: {audio_file}")
+        else:
+            print("❌ Audio download failed.")
 
 if __name__ == "__main__":
     main()
