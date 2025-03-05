@@ -1,5 +1,4 @@
 pretrained_models
-Dr. Dre - Still D.R.E. ft. Snoop Dogg.wav
 loading
 __pycache__/
 */__pycache__/
@@ -7,3 +6,7 @@ __pycache__/
 # Ignore model files but keep the directory structure
 models/*
 !models/.gitkeep
+
+# macOS
+.DS_Store
+**/.DS_Store
