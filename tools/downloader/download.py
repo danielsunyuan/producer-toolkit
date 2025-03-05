@@ -19,16 +19,25 @@ def download_video(url, output_path=None):
         output_path = os.path.join(output_path, '%(title)s.mp4')
 
     ydl_opts = {
-        'format': 'bv+ba/best',  # Best video + best audio
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',  # Highest quality video + audio
         'merge_output_format': 'mp4',  # Ensure MP4 output
         'outtmpl': output_path,  # Set output file path
         'ffmpeg_location': '/opt/homebrew/bin/ffmpeg',  # Updated FFmpeg path
+        'postprocessor_args': [
+            # Video quality
+            '-c:v', 'libx264', '-crf', '17', '-preset', 'veryslow',
+            # Audio quality
+            '-c:a', 'aac', '-b:a', '320k',
+            # General
+            '-movflags', '+faststart'
+        ],
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
     
     return output_path
+
 
 def download_audio(url, output_path=None):
     """
@@ -42,31 +51,34 @@ def download_audio(url, output_path=None):
         str: Path to the downloaded WAV file.
     """
     if output_path is None:
-        output_path = '%(title)s.wav'  # Default filename
+        output_path = '%(title)s'  # No .wav extension
     elif os.path.isdir(output_path):
-        # If output_path is a directory, append the default filename pattern
-        output_path = os.path.join(output_path, '%(title)s.wav')
+        output_path = os.path.join(output_path, '%(title)s')  # No .wav extension
 
     ydl_opts = {
-        'format': 'bestaudio/best',  # Best available audio
-        'outtmpl': output_path,  # Set output file path
+        'format': 'bestaudio[ext=m4a]/bestaudio/best',  # Best available audio
+        'outtmpl': output_path,  # yt-dlp appends .wav automatically
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',  # Convert to WAV
             'preferredcodec': 'wav',
-            'preferredquality': '192',  # 192 kbps
+            'preferredquality': '320',  # Highest quality
         }],
-        'postprocessor_args': ["-ar", "44100", "-ac", "2"],  # Ensure 44.1kHz, stereo
+        'postprocessor_args': [
+            "-ar", "44100",  # 44.1kHz sample rate
+            "-ac", "2",      # Stereo
+            "-c:a", "pcm_s24le",  # 24-bit depth
+        ],
         'ffmpeg_location': '/opt/homebrew/bin/ffmpeg',  # Updated FFmpeg path
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
-    
+
     return output_path
 
-# Example usage
-video_url = "https://www.youtube.com/watch?v=q6EoRBvdVPQ"
 
-# Call one of these functions depending on what you need:
-download_video(video_url)  # Download video as MP4
-# download_audio(video_url)  # Download audio as WAV
+def test():
+    # Example usage (commented out for import usage)
+    video_url = "https://www.youtube.com/watch?v=q6EoRBvdVPQ"
+    download_video(video_url)  # Download video as MP4
+    download_audio(video_url)  # Download audio as WAV
