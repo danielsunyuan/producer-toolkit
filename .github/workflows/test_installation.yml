@@ -7,6 +7,11 @@ on:
     branches: [ main ]
   workflow_dispatch:  # Allows manual triggering
 
+# This ensures directory creation works on all platforms
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test-ubuntu:
     runs-on: ubuntu-latest
@@ -147,6 +152,9 @@ jobs:
 
   test-windows:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
     steps:
       - uses: actions/checkout@v3
       
@@ -167,17 +175,20 @@ jobs:
       
       - name: Generate test audio file
         run: |
-          # Create test directory
-          mkdir -p tests/ci/resources
+          # Use PowerShell New-Item to create directories safely
+          New-Item -Path "tests" -ItemType Directory -Force -ErrorAction SilentlyContinue
+          New-Item -Path "tests/ci" -ItemType Directory -Force -ErrorAction SilentlyContinue
+          New-Item -Path "tests/ci/resources" -ItemType Directory -Force -ErrorAction SilentlyContinue
           # Generate a synthetic audio file for testing (1 second of silence)
           ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y tests/ci/resources/sample.wav
       
       - name: Setup mock test for installation verification
         run: |
-          mkdir -p output
+          # Use PowerShell New-Item to create directories safely
+          New-Item -Path "output" -ItemType Directory -Force -ErrorAction SilentlyContinue
+          New-Item -Path "output/vocals" -ItemType Directory -Force -ErrorAction SilentlyContinue
+          New-Item -Path "output/accompaniment" -ItemType Directory -Force -ErrorAction SilentlyContinue
           # Create mock files to verify structure without downloading models
-          mkdir -p output/vocals
-          mkdir -p output/accompaniment
           ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y output/vocals.wav
           ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y output/accompaniment.wav
           
@@ -202,21 +213,19 @@ jobs:
           
       - name: Set up project structure
         run: |
-          # Create documentation directory if it doesn't exist
-          if (-not (Test-Path "docs")) {
-            mkdir -p docs
-          }
+          # Use PowerShell New-Item to create directories safely
+          New-Item -Path "docs" -ItemType Directory -Force -ErrorAction SilentlyContinue
           "# Installation Guide" | Out-File -FilePath docs/INSTALLATION.md -Encoding utf8
           "# Usage Guide" | Out-File -FilePath docs/USAGE.md -Encoding utf8
           
           # Set up scripts directory if it doesn't exist
-          if (-not (Test-Path "scripts/windows")) {
-            mkdir -p scripts/windows
-          }
+          New-Item -Path "scripts" -ItemType Directory -Force -ErrorAction SilentlyContinue
+          New-Item -Path "scripts/windows" -ItemType Directory -Force -ErrorAction SilentlyContinue
           
           # Move batch files to scripts/windows directory if they exist
           if (Test-Path "install.bat") {
-            mkdir -p scripts/windows -Force
+            # Ensure directory exists
+            New-Item -Path "scripts/windows" -ItemType Directory -Force -ErrorAction SilentlyContinue
             Move-Item -Path "install.bat" -Destination "scripts/windows/"
             $content = Get-Content "scripts/windows/install.bat"
             $content = $content -replace "python install.py", "cd ..\\..\ && python install.py"
@@ -224,7 +233,8 @@ jobs:
           }
           
           if (Test-Path "run_producer_toolkit.bat") {
-            mkdir -p scripts/windows -Force
+            # Ensure directory exists
+            New-Item -Path "scripts/windows" -ItemType Directory -Force -ErrorAction SilentlyContinue
             Move-Item -Path "run_producer_toolkit.bat" -Destination "scripts/windows/run_toolkit.bat"
             $content = Get-Content "scripts/windows/run_toolkit.bat"
             $content = $content -replace "python main.py", "cd ..\\..\ && python main.py"
