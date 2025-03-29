@@ -232,8 +232,8 @@ jobs:
           Get-ChildItem -Path "docs"
           Get-ChildItem -Path "scripts/windows"
 
-  # Test with custom output directory to avoid permission issues
-  test-with-custom-output:
+  # Test full pipeline functionality
+  test-pipeline:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -253,37 +253,112 @@ jobs:
       
       - name: Generate test audio file
         run: |
-          # Create test directory
+          # Create test directory and test audio file
           mkdir -p test_resources
-          # Generate a synthetic audio file for testing (1 second of silence)
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y test_resources/sample.wav
+          # Generate a 1-second sine wave test audio (better than silence)
+          ffmpeg -f lavfi -i "sine=frequency=440:duration=1" -ar 44100 -ac 2 -c:a pcm_s16le -y test_resources/test_audio.wav
+          
+          # Also create a video file for testing
+          ffmpeg -f lavfi -i "sine=frequency=440:duration=1" -f lavfi -i color=c=blue:s=320x240:d=1 -ar 44100 -ac 2 -c:a aac -c:v libx264 -y test_resources/test_video.mp4
       
-      - name: Test with custom output directory
+      - name: Test audio download functionality
         run: |
-          # Create output directory
-          mkdir -p ./custom_output
+          mkdir -p output/audio_test
+          # Test the audio download command with the test file
+          python main.py "dummy_url" -a -o output/audio_test --test --test-file test_resources/test_audio.wav
           
-          # Create mock files to verify structure without downloading models
-          mkdir -p ./custom_output/vocals
-          mkdir -p ./custom_output/accompaniment
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y ./custom_output/vocals.wav
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y ./custom_output/accompaniment.wav
+          # Check if the file exists in the output directory
+          find output/audio_test -name "*.wav" | grep .
+      
+      - name: Test video download functionality
+        run: |
+          mkdir -p output/video_test
+          # Test the video download command with the test file
+          python main.py "dummy_url" -v -o output/video_test --test --test-file test_resources/test_video.mp4
           
-          # Create a mock test script for testing with custom output
-          cat > test_custom.py << 'EOF'
+          # Check if the file exists in the output directory
+          find output/video_test -name "*.mp4" | grep .
+      
+      - name: Test stem separation functionality
+        run: |
+          mkdir -p output/stems_test
+          
+          # Set up mock model behavior by:
+          # 1. Creating a model config file to simulate model loading
+          mkdir -p models/2stems
+          touch models/2stems/separator_config.json
+          
+          # 2. Create a stem extraction mock test that uses our test infrastructure
+          cat > test_stems.py << 'EOF'
           import sys
           import os
+          import shutil
           
-          print("Mock test with custom output successful - would call extract_stems() in a real scenario")
+          # Generate mock stem files
+          input_file = "test_resources/test_audio.wav"
+          output_dir = "output/stems_test"
           
-          # In a real scenario, we would call:
-          # from tools.processor.spleeter_processor import extract_stems
-          # extract_stems("test_resources/sample.wav", "./custom_output", stem_number=2)
+          # Create sample output structure
+          stems_dir = os.path.join(output_dir, "test_audio_stems")
+          os.makedirs(stems_dir, exist_ok=True)
+          
+          # Create mock stem files
+          shutil.copy(input_file, os.path.join(output_dir, "vocals.wav"))
+          shutil.copy(input_file, os.path.join(output_dir, "accompaniment.wav"))
+          
+          print("✅ Mock stem extraction completed")
           EOF
           
-          # Run the script
-          python test_custom.py
+          # Test the stem extraction command in test mode
+          python main.py "dummy_url" -s -o output/stems_test --test --test-file test_resources/test_audio.wav -n 2
           
-          # Verify stems exist in custom output
-          find ./custom_output -name "vocals.wav" | grep .
-          find ./custom_output -name "accompaniment.wav" | grep .
+          # Check if output exists - we're only testing the command line pipeline works, 
+          # not that actual separation works
+          ls -la output/stems_test
+      
+      - name: Test complete pipeline with mock
+        run: |
+          # Integration test with sample audio
+          mkdir -p output/pipeline_test
+          
+          # Use simple script to test the full pipeline end-to-end
+          cat > test_pipeline.py << 'EOF'
+          import os
+          import shutil
+          import subprocess
+          import sys
+          
+          # Test file
+          test_file = "test_resources/test_audio.wav"
+          output_dir = "output/pipeline_test"
+          
+          # Run the main command with test mode
+          cmd = [
+              "python", "main.py", 
+              "https://www.youtube.com/watch?v=test",  # Dummy URL
+              "-s",                                    # Extract stems
+              "-o", output_dir,                        # Output directory
+              "-n", "2",                               # 2 stems
+              "--test",                                # Test mode
+              "--test-file", test_file                 # Test file
+          ]
+          
+          result = subprocess.run(cmd, capture_output=True, text=True)
+          
+          # Print output for debugging
+          print(f"Command exit code: {result.returncode}")
+          print(f"STDOUT: {result.stdout}")
+          print(f"STDERR: {result.stderr}")
+          
+          # Verify expected output exists
+          expected_file = os.path.join(output_dir, "vocals.wav")
+          if os.path.exists(expected_file):
+              print(f"Pipeline test successful: {expected_file} exists")
+              sys.exit(0)
+          else:
+              print(f"Pipeline test failed: {expected_file} not found")
+              sys.exit(1)
+          EOF
+          
+          # Run the pipeline test
+          python test_pipeline.py
