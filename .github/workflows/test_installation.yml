@@ -1,0 +1,138 @@
+name: Test Installation and Basic Functionality
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  test-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      
+      - name: Run installation script
+        run: python install.py
+      
+      - name: Test audio download
+        run: |
+          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -a
+          # Verify file exists (will have a dynamic filename)
+          find ~/Downloads -name "*.wav" -type f -size +0c | grep .
+      
+      - name: Test stem extraction
+        run: |
+          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -s
+          # Verify stems exist
+          find ~/Downloads -name "vocals.wav" -type f -size +0c | grep .
+          find ~/Downloads -name "drums.wav" -type f -size +0c | grep .
+
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      
+      - name: Install FFmpeg
+        run: |
+          brew install ffmpeg
+      
+      - name: Run installation script
+        run: python install.py
+      
+      - name: Test audio download
+        run: |
+          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -a
+          # Verify file exists (will have a dynamic filename)
+          find ~/Downloads -name "*.wav" -type f -size +0c | grep .
+      
+      - name: Test stem extraction
+        run: |
+          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -s
+          # Verify stems exist
+          find ~/Downloads -name "vocals.wav" -type f -size +0c | grep .
+          find ~/Downloads -name "drums.wav" -type f -size +0c | grep .
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      
+      - name: Install FFmpeg
+        # Using Chocolatey to install FFmpeg on Windows
+        run: |
+          choco install ffmpeg -y
+          # Add to PATH for this session
+          echo "$env:ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      
+      - name: Run installation script
+        run: python install.py
+      
+      - name: Test audio download
+        run: |
+          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -a
+          # Verify file exists (will have a dynamic filename)
+          Get-ChildItem -Path "$env:USERPROFILE\Downloads" -Filter "*.wav" -File | Where-Object { $_.Length -gt 0 }
+      
+      - name: Test stem extraction
+        run: |
+          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -s
+          # Verify stems exist
+          Get-ChildItem -Path "$env:USERPROFILE\Downloads" -Recurse -Filter "vocals.wav" -File | Where-Object { $_.Length -gt 0 }
+          Get-ChildItem -Path "$env:USERPROFILE\Downloads" -Recurse -Filter "drums.wav" -File | Where-Object { $_.Length -gt 0 }
+
+  # Test with custom output directory to avoid permission issues
+  test-with-custom-output:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      
+      - name: Run installation script
+        run: python install.py
+      
+      - name: Create output directory
+        run: mkdir -p ./output
+      
+      - name: Test audio download with custom output
+        run: |
+          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -a -o ./output
+          # Verify file exists
+          find ./output -name "*.wav" -type f -size +0c | grep .
+      
+      - name: Test stem extraction with custom output
+        run: |
+          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -s -o ./output
+          # Verify stems exist
+          find ./output -name "vocals.wav" -type f -size +0c | grep .
+          find ./output -name "drums.wav" -type f -size +0c | grep .

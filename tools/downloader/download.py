@@ -1,4 +1,5 @@
 import os
+import shutil
 import yt_dlp
 
 def download_video(url, output_path=None):
@@ -22,7 +23,8 @@ def download_video(url, output_path=None):
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',  # Highest quality video + audio
         'merge_output_format': 'mp4',  # Ensure MP4 output
         'outtmpl': output_path,  # Set output file path
-        'ffmpeg_location': '/opt/homebrew/bin/ffmpeg',  # Updated FFmpeg path
+        # Dynamically find ffmpeg path
+        'ffmpeg_location': shutil.which('ffmpeg'),
         'postprocessor_args': [
             # Video quality
             '-c:v', 'libx264', '-crf', '17', '-preset', 'veryslow',
@@ -77,7 +79,8 @@ def download_audio(url, output_path=None):
             "-ac", "2",      # Stereo
             "-c:a", "pcm_s24le",  # 24-bit depth
         ],
-        'ffmpeg_location': '/opt/homebrew/bin/ffmpeg',  # Updated FFmpeg path
+        # Dynamically find ffmpeg path
+        'ffmpeg_location': shutil.which('ffmpeg'),
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

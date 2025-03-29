@@ -14,7 +14,7 @@ A command-line toolkit for music producers to download audio/video from YouTube 
 ### Requirements
 
 - Python 3.9+ recommended
-- ffmpeg installed on your system
+- ffmpeg installed on your system (the installation script will help with this)
 
 ### Setup
 
@@ -30,7 +30,19 @@ conda create -n producer python=3.9
 conda activate producer
 ```
 
-3. Install dependencies:
+3. Run the installation script:
+```bash
+python install.py
+```
+
+The installation script will:
+- Check your Python version
+- Install ffmpeg if it's not already installed (macOS via Homebrew, Linux via apt)
+- Guide you through manual ffmpeg installation on Windows
+- Install Python dependencies from requirements.txt
+- Make platform-specific adjustments for compatibility
+
+Alternatively, you can manually install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
@@ -57,6 +69,25 @@ python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
 Specify output directory:
 ```bash
 python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -o ~/Desktop
+```
+
+### Windows Usage
+
+On Windows, you can use the provided batch files:
+
+Installation:
+```
+install.bat
+```
+
+Run the toolkit (extracts stems by default):
+```
+run_producer_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID"
+```
+
+With options:
+```
+run_producer_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
 ```
 
 ### Output

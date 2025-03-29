@@ -1,6 +1,8 @@
 import os
+import sys
 import argparse
 import tempfile
+import platform
 from pathlib import Path
 from tools.downloader.download import download_audio, download_video
 from tools.processor.spleeter_processor import extract_stems
@@ -28,7 +30,19 @@ def main():
     options = parser.parse_args()
     
     # Determine the output directory (default: Downloads folder)
-    output_dir = options.output_dir if options.output_dir else os.path.join(os.path.expanduser("~"), "Downloads")
+    if options.output_dir:
+        output_dir = options.output_dir
+    else:
+        # Platform-specific Downloads folder
+        if platform.system() == "Windows":
+            # On Windows, use the user's Downloads folder
+            output_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+            if not os.path.exists(output_dir):
+                # Fallback to Documents folder if Downloads doesn't exist
+                output_dir = os.path.join(os.path.expanduser("~"), "Documents")
+        else:
+            # macOS and Linux
+            output_dir = os.path.join(os.path.expanduser("~"), "Downloads")
     
     if options.audio:
         print("Downloading audio...")
