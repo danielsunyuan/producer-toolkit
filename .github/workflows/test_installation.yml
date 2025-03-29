@@ -29,9 +29,9 @@ jobs:
       - name: Generate test audio file
         run: |
           # Create test directory
-          mkdir -p test_resources
+          mkdir -p tests/ci/resources
           # Generate a synthetic audio file for testing (1 second of silence)
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y test_resources/sample.wav
+          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y tests/ci/resources/sample.wav
       
       - name: Setup mock test for installation verification
         run: |
@@ -51,7 +51,7 @@ jobs:
           
           # In a real scenario, we would call:
           # from tools.processor.spleeter_processor import extract_stems
-          # extract_stems("test_resources/sample.wav", "output", stem_number=2)
+          # extract_stems("tests/ci/resources/sample.wav", "output", stem_number=2)
           EOF
           
           # Run the script
@@ -113,9 +113,9 @@ jobs:
       - name: Generate test audio file
         run: |
           # Create test directory
-          mkdir -p test_resources
+          mkdir -p tests/ci/resources
           # Generate a synthetic audio file for testing (1 second of silence)
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y test_resources/sample.wav
+          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y tests/ci/resources/sample.wav
       
       - name: Setup mock test for installation verification
         run: |
@@ -135,7 +135,7 @@ jobs:
           
           # In a real scenario, we would call:
           # from tools.processor.spleeter_processor import extract_stems
-          # extract_stems("test_resources/sample.wav", "output", stem_number=2)
+          # extract_stems("tests/ci/resources/sample.wav", "output", stem_number=2)
           EOF
           
           # Run the script
@@ -168,9 +168,9 @@ jobs:
       - name: Generate test audio file
         run: |
           # Create test directory
-          mkdir -p test_resources
+          mkdir -p tests/ci/resources
           # Generate a synthetic audio file for testing (1 second of silence)
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y test_resources/sample.wav
+          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y tests/ci/resources/sample.wav
       
       - name: Setup mock test for installation verification
         run: |
@@ -190,7 +190,7 @@ jobs:
           
           # In a real scenario, we would call:
           # from tools.processor.spleeter_processor import extract_stems
-          # extract_stems("test_resources/sample.wav", "output", stem_number=2)
+          # extract_stems("tests/ci/resources/sample.wav", "output", stem_number=2)
           "@ | Out-File -FilePath test.py -Encoding utf8
           
           # Run the script
@@ -258,18 +258,18 @@ jobs:
       - name: Generate test audio file
         run: |
           # Create test directory and test audio file
-          mkdir -p test_resources
+          mkdir -p tests/ci/resources
           # Generate a 1-second sine wave test audio (better than silence)
-          ffmpeg -f lavfi -i "sine=frequency=440:duration=1" -ar 44100 -ac 2 -c:a pcm_s16le -y test_resources/test_audio.wav
+          ffmpeg -f lavfi -i "sine=frequency=440:duration=1" -ar 44100 -ac 2 -c:a pcm_s16le -y tests/ci/resources/test_audio.wav
           
           # Also create a video file for testing
-          ffmpeg -f lavfi -i "sine=frequency=440:duration=1" -f lavfi -i color=c=blue:s=320x240:d=1 -ar 44100 -ac 2 -c:a aac -c:v libx264 -y test_resources/test_video.mp4
+          ffmpeg -f lavfi -i "sine=frequency=440:duration=1" -f lavfi -i color=c=blue:s=320x240:d=1 -ar 44100 -ac 2 -c:a aac -c:v libx264 -y tests/ci/resources/test_video.mp4
       
       - name: Test audio download functionality
         run: |
           mkdir -p output/audio_test
           # Test the audio download command with the test file
-          python main.py "dummy_url" -a -o output/audio_test --test --test-file test_resources/test_audio.wav
+          python main.py "dummy_url" -a -o output/audio_test --test --test-file tests/ci/resources/test_audio.wav
           
           # Check if the file exists in the output directory
           find output/audio_test -name "*.wav" | grep .
@@ -278,7 +278,7 @@ jobs:
         run: |
           mkdir -p output/video_test
           # Test the video download command with the test file
-          python main.py "dummy_url" -v -o output/video_test --test --test-file test_resources/test_video.mp4
+          python main.py "dummy_url" -v -o output/video_test --test --test-file tests/ci/resources/test_video.mp4
           
           # Check if the file exists in the output directory
           find output/video_test -name "*.mp4" | grep .
@@ -299,7 +299,7 @@ jobs:
           import shutil
           
           # Generate mock stem files
-          input_file = "test_resources/test_audio.wav"
+          input_file = "tests/ci/resources/test_audio.wav"
           output_dir = "output/stems_test"
           
           # Create sample output structure
@@ -314,7 +314,7 @@ jobs:
           EOF
           
           # Test the stem extraction command in test mode
-          python main.py "dummy_url" -s -o output/stems_test --test --test-file test_resources/test_audio.wav -n 2
+          python main.py "dummy_url" -s -o output/stems_test --test --test-file tests/ci/resources/test_audio.wav -n 2
           
           # Check if output exists - we're only testing the command line pipeline works, 
           # not that actual separation works
@@ -333,7 +333,7 @@ jobs:
           import sys
           
           # Test file
-          test_file = "test_resources/test_audio.wav"
+          test_file = "tests/ci/resources/test_audio.wav"
           output_dir = "output/pipeline_test"
           
           # Run the main command with test mode
