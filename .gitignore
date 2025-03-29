@@ -7,6 +7,11 @@ __pycache__/
 models/*
 !models/.gitkeep
 
+# Test resources
+test_resources/
+output/
+custom_output/
+
 # macOS
 .DS_Store
 **/.DS_Store

@@ -20,7 +20,7 @@ def check_python_version():
         print("Please install Python 3.9 or newer.")
         return False
     
-    print(f"Python version {major}.{minor} ✓")
+    print(f"Python version {major}.{minor} - OK")
     return True
 
 def check_ffmpeg():
@@ -31,7 +31,7 @@ def check_ffmpeg():
     ffmpeg_installed = shutil.which("ffmpeg") is not None
     
     if ffmpeg_installed:
-        print("FFmpeg is already installed ✓")
+        print("FFmpeg is already installed - OK")
         return True
     
     print("FFmpeg not found. Attempting to install...")
@@ -47,7 +47,7 @@ def check_ffmpeg():
                 return False
             
             subprocess.run(["brew", "install", "ffmpeg"], check=True)
-            print("FFmpeg installed successfully with Homebrew ✓")
+            print("FFmpeg installed successfully with Homebrew - OK")
             return True
         except subprocess.CalledProcessError:
             print("Failed to install FFmpeg with Homebrew.")
@@ -66,7 +66,7 @@ def check_ffmpeg():
             # Try to install ffmpeg with apt (for Debian/Ubuntu)
             subprocess.run(["sudo", "apt", "update"], check=True)
             subprocess.run(["sudo", "apt", "install", "-y", "ffmpeg"], check=True)
-            print("FFmpeg installed successfully with apt ✓")
+            print("FFmpeg installed successfully with apt - OK")
             return True
         except subprocess.CalledProcessError:
             print("Failed to install FFmpeg with apt.")
@@ -101,7 +101,7 @@ def update_ffmpeg_path():
         with open(download_file, "w") as file:
             file.write(modified_content)
             
-        print(f"Updated {download_file} for cross-platform compatibility ✓")
+        print(f"Updated {download_file} for cross-platform compatibility - OK")
     else:
         print(f"No FFmpeg path to update in {download_file}")
 
@@ -136,7 +136,7 @@ def install_dependencies():
         # For all other platforms, use regular requirements
         subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"], check=True)
     
-    print("Dependencies installed successfully ✓")
+    print("Dependencies installed successfully - OK")
     return True
 
 def check_windows_compatibility():
@@ -161,7 +161,7 @@ def check_windows_compatibility():
         print("Making Windows path compatibility updates...")
         
         # No specific changes needed as the code already uses os.path.join consistently
-        print("The code is already using os.path.join for path handling ✓")
+        print("The code is already using os.path.join for path handling - OK")
 
 def main():
     """Main installation function."""
@@ -188,7 +188,7 @@ def main():
         return False
     
     print("\n==============================================")
-    print("  Installation Complete! ✓")
+    print("  Installation Complete! SUCCESS")
     print("==============================================\n")
     
     print("You can now use Producer Toolkit with:")
