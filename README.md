@@ -8,15 +8,11 @@ A command-line toolkit for music producers to download audio/video from YouTube 
 - Extract stems (vocals, drums, bass, other) from audio files
 - Clean output format with organized file structure
 - Local model storage for faster processing
+- Cross-platform support (macOS, Linux, Windows)
 
-## Installation
+## Quick Start
 
-### Requirements
-
-- Python 3.9+ recommended
-- ffmpeg installed on your system
-
-### Setup
+### Installation
 
 1. Clone the repository:
 ```bash
@@ -24,48 +20,55 @@ git clone https://github.com/yourusername/producer-toolkit.git
 cd producer-toolkit
 ```
 
-2. Create a conda environment (recommended):
+2. Run the installation script:
 ```bash
-conda create -n producer python=3.9
-conda activate producer
+# On macOS/Linux
+python install.py
+
+# On Windows
+scripts\windows\install.bat
 ```
 
-3. Install dependencies:
+### Basic Usage
+
 ```bash
-pip install -r requirements.txt
-```
+# Extract stems (vocals, drums, bass, other)
+python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
 
-## Usage
-
-### Basic Commands
-
-Download audio:
-```bash
+# Download audio only
 python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
-```
 
-Download video:
-```bash
+# Download video
 python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
 ```
 
-Extract stems:
-```bash
-python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+Windows users can use the provided batch file:
+```
+scripts\windows\run_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
 ```
 
-Specify output directory:
-```bash
-python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -o ~/Desktop
+## Documentation
+
+Detailed documentation is available in the `docs` directory:
+
+- [Installation Guide](docs/INSTALLATION.md) - Detailed installation instructions for all platforms
+- [Usage Guide](docs/USAGE.md) - Comprehensive usage instructions and examples
+
+## Project Structure
+
 ```
-
-### Output
-
-The audio stems will be saved in a directory named after the video title:
-- vocals.wav - Contains the isolated vocals
-- drums.wav - Contains the isolated drums
-- bass.wav - Contains the isolated bass
-- other.wav - Contains everything else
+.
+├── docs/                 # Documentation
+├── main.py               # Main CLI entry point
+├── install.py            # Cross-platform installation script
+├── models/               # Where stem separation models are stored
+├── requirements.txt      # Python dependencies
+├── scripts/              # Helper scripts
+│   └── windows/          # Windows-specific scripts
+└── tools/                # Core functionality
+    ├── downloader/       # YouTube downloading tools
+    └── processor/        # Audio processing tools
+```
 
 ## First-Time Use
 
