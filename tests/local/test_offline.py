@@ -112,6 +112,9 @@ def run_tests():
     print_step("Test Summary")
     print(f"Stem Extraction: {'✅ SUCCESS' if stem_success else '❌ FAILED'}")
     print(f"\nOutput files are located in: {dirs['base'].absolute()}")
+    
+    # Return test result for the test runner
+    return stem_success
 
 if __name__ == "__main__":
     run_tests()

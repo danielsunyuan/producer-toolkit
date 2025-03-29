@@ -6,7 +6,10 @@ This script allows you to run the CI pipeline tests locally.
 It replicates the actions performed in the GitHub Actions workflow.
 
 Usage:
-    python -m tests.ci.scripts.run_ci_test
+    python -m tests.ci.scripts.run_ci_test [--cleanup]
+
+Options:
+    --cleanup   Clean up test output files after successful tests
 
 Requirements:
     - FFmpeg must be installed and available in the PATH
@@ -18,6 +21,7 @@ import sys
 import platform
 import subprocess
 import shutil
+import argparse
 from pathlib import Path
 
 # Make sure the package root is in sys.path
@@ -157,7 +161,24 @@ def test_stem_extraction(dirs, audio_file):
         print(f"❌ ERROR: Stem extraction test failed")
         return False
 
-def run_tests():
+def cleanup_test_outputs(dirs):
+    """Clean up test output directories."""
+    print_step("Cleaning Up Test Outputs")
+    
+    # Clean up output directory
+    if dirs["output"].exists():
+        print(f"Removing {dirs['output']}")
+        shutil.rmtree(dirs["output"])
+    
+    print("Cleanup completed.")
+
+def get_args():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description="Run CI tests for Producer Toolkit")
+    parser.add_argument("--cleanup", action="store_true", help="Clean up test files after successful tests")
+    return parser.parse_args()
+
+def run_tests(cleanup=False):
     """Run all CI tests."""
     print_step("Starting CI Tests")
     print(f"System: {platform.system()} {platform.release()} ({platform.machine()})")
@@ -182,11 +203,23 @@ def run_tests():
         print(f"Stem Extraction Test: {'✅ SUCCESS' if stem_success else '❌ FAILED'}")
         print(f"\nOutput files are located in: {dirs['output'].absolute()}")
         
-        if audio_success and video_success and stem_success:
+        all_tests_passed = audio_success and video_success and stem_success
+        
+        if all_tests_passed:
             print("\nAll CI tests passed successfully! ✅")
+            
+            # Clean up if requested and all tests passed
+            if cleanup:
+                cleanup_test_outputs(dirs)
+                
             return 0
         else:
             print("\nSome CI tests failed. ❌")
+            
+            # Don't clean up if tests failed (for debugging)
+            if cleanup:
+                print("Skipping cleanup due to failed tests.")
+                
             return 1
     
     except Exception as e:
@@ -194,4 +227,5 @@ def run_tests():
         return 1
 
 if __name__ == "__main__":
-    sys.exit(run_tests())
+    args = get_args()
+    sys.exit(run_tests(cleanup=args.cleanup))

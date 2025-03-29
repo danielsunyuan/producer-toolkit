@@ -175,6 +175,9 @@ def run_tests(youtube_link):
     print(f"Video Download: {'✅ SUCCESS' if video_file else '❌ FAILED'}")
     print(f"Stem Extraction: {'✅ SUCCESS' if stem_success else '❌ FAILED'}")
     print(f"\nOutput files are located in: {dirs['base'].absolute()}")
+    
+    # Return overall success status for the test runner
+    return bool(audio_file) and bool(video_file) and stem_success
 
 if __name__ == "__main__":
     # Allow overriding the YouTube link from command line
