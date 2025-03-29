@@ -89,7 +89,7 @@ def test_stem_extraction(audio_file, output_dir, stem_number=2):
         print(f"❌ ERROR: Stem extraction failed with exception: {str(e)}")
         return False
 
-def run_tests():
+def run_tests(force_fail=False):
     """Run all tests."""
     print_step("Starting Offline Producer Toolkit Tests")
     print(f"Date and time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -107,6 +107,11 @@ def run_tests():
     
     # Test stem extraction (convert paths to strings)
     stem_success = test_stem_extraction(str(sample_audio), str(dirs["stems"]), stem_number=2)
+    
+    # For testing cleanup behavior with failing tests
+    if force_fail:
+        print("⚠️ Forcing test failure for cleanup testing")
+        stem_success = False
     
     # Print summary
     print_step("Test Summary")

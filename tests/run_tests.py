@@ -12,6 +12,7 @@ Options:
     --offline   Run offline tests only (using sample files)
     --local     Run local tests (with YouTube download)
     --cleanup   Clean up test output files after successful tests
+    --fail      Force failure (for testing cleanup behavior)
     
 If no option is specified, offline tests will be run by default.
 
@@ -44,6 +45,7 @@ def get_args():
     test_group.add_argument("--local", action="store_true", help="Run local tests with YouTube download")
     
     parser.add_argument("--cleanup", action="store_true", help="Clean up test files after successful tests")
+    parser.add_argument("--fail", action="store_true", help="Force failure (for testing cleanup behavior)")
     parser.add_argument("youtube_url", nargs="?", help="YouTube URL for testing (optional)")
     
     args = parser.parse_args()
@@ -69,7 +71,7 @@ def cleanup_test_outputs():
     
     print("Cleanup completed.")
 
-def run_test_module(module_name):
+def run_test_module(module_name, force_fail=False):
     """Import and run the specified test module."""
     print(f"\n{'=' * 60}")
     print(f"Running {module_name}")
@@ -81,7 +83,11 @@ def run_test_module(module_name):
         
         # If the module has a run_tests function, call it
         if hasattr(test_module, "run_tests"):
-            result = test_module.run_tests()
+            # Apply force fail only to the offline test
+            if force_fail and module_name == "tests.local.test_offline":
+                result = test_module.run_tests(force_fail=True)
+            else:
+                result = test_module.run_tests()
             return result if result is not None else True
         else:
             print(f"ERROR: {module_name} does not have a run_tests function")
@@ -97,7 +103,7 @@ def main():
     all_tests_passed = True
     
     if args.all or args.offline:
-        offline_result = run_test_module("tests.local.test_offline")
+        offline_result = run_test_module("tests.local.test_offline", force_fail=args.fail)
         all_tests_passed = all_tests_passed and offline_result
         
     if args.all or args.local:
