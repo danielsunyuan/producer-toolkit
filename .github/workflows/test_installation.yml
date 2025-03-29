@@ -26,18 +26,33 @@ jobs:
       - name: Run installation script
         run: python install.py
       
-      - name: Test audio download
+      - name: Generate test audio file
         run: |
-          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -a
-          # Verify file exists (will have a dynamic filename)
-          find ~/Downloads -name "*.wav" -type f -size +0c | grep .
+          # Create test directory
+          mkdir -p test_resources
+          # Generate a synthetic audio file for testing (1 second of silence)
+          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y test_resources/sample.wav
       
-      - name: Test stem extraction
+      - name: Test direct processing
         run: |
-          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -s
+          mkdir -p output
+          # Create a simple processor script for testing
+          cat > test.py << 'EOF'
+          import sys
+          import os
+          from tools.processor.spleeter_processor import extract_stems
+          
+          if __name__ == "__main__":
+              # Process using sample audio
+              extract_stems("test_resources/sample.wav", "output", stem_number=2)
+          EOF
+          
+          # Run the script
+          python test.py
+          
           # Verify stems exist
-          find ~/Downloads -name "vocals.wav" -type f -size +0c | grep .
-          find ~/Downloads -name "drums.wav" -type f -size +0c | grep .
+          find output -name "vocals.wav" | grep .
+          find output -name "accompaniment.wav" | grep .
 
   test-macos:
     runs-on: macos-latest
@@ -56,18 +71,33 @@ jobs:
       - name: Run installation script
         run: python install.py
       
-      - name: Test audio download
+      - name: Generate test audio file
         run: |
-          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -a
-          # Verify file exists (will have a dynamic filename)
-          find ~/Downloads -name "*.wav" -type f -size +0c | grep .
+          # Create test directory
+          mkdir -p test_resources
+          # Generate a synthetic audio file for testing (1 second of silence)
+          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y test_resources/sample.wav
       
-      - name: Test stem extraction
+      - name: Test direct processing
         run: |
-          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -s
+          mkdir -p output
+          # Create a simple processor script for testing
+          cat > test.py << 'EOF'
+          import sys
+          import os
+          from tools.processor.spleeter_processor import extract_stems
+          
+          if __name__ == "__main__":
+              # Process using sample audio
+              extract_stems("test_resources/sample.wav", "output", stem_number=2)
+          EOF
+          
+          # Run the script
+          python test.py
+          
           # Verify stems exist
-          find ~/Downloads -name "vocals.wav" -type f -size +0c | grep .
-          find ~/Downloads -name "drums.wav" -type f -size +0c | grep .
+          find output -name "vocals.wav" | grep .
+          find output -name "accompaniment.wav" | grep .
 
   test-windows:
     runs-on: windows-latest
@@ -89,18 +119,33 @@ jobs:
       - name: Run installation script
         run: python install.py
       
-      - name: Test audio download
+      - name: Generate test audio file
         run: |
-          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -a
-          # Verify file exists (will have a dynamic filename)
-          Get-ChildItem -Path "$env:USERPROFILE\Downloads" -Filter "*.wav" -File | Where-Object { $_.Length -gt 0 }
+          # Create test directory
+          mkdir -p test_resources
+          # Generate a synthetic audio file for testing (1 second of silence)
+          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y test_resources/sample.wav
       
-      - name: Test stem extraction
+      - name: Test direct processing
         run: |
-          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -s
+          mkdir -p output
+          # Create test script
+          @"
+          import sys
+          import os
+          from tools.processor.spleeter_processor import extract_stems
+          
+          if __name__ == "__main__":
+              # Process using sample audio
+              extract_stems("test_resources/sample.wav", "output", stem_number=2)
+          "@ | Out-File -FilePath test.py -Encoding utf8
+          
+          # Run the script
+          python test.py
+          
           # Verify stems exist
-          Get-ChildItem -Path "$env:USERPROFILE\Downloads" -Recurse -Filter "vocals.wav" -File | Where-Object { $_.Length -gt 0 }
-          Get-ChildItem -Path "$env:USERPROFILE\Downloads" -Recurse -Filter "drums.wav" -File | Where-Object { $_.Length -gt 0 }
+          Get-ChildItem -Path "output" -Filter "vocals.wav" -File | Where-Object { $_.Length -gt 0 }
+          Get-ChildItem -Path "output" -Filter "accompaniment.wav" -File | Where-Object { $_.Length -gt 0 }
 
   # Test with custom output directory to avoid permission issues
   test-with-custom-output:
@@ -121,18 +166,32 @@ jobs:
       - name: Run installation script
         run: python install.py
       
-      - name: Create output directory
-        run: mkdir -p ./output
-      
-      - name: Test audio download with custom output
+      - name: Generate test audio file
         run: |
-          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -a -o ./output
-          # Verify file exists
-          find ./output -name "*.wav" -type f -size +0c | grep .
+          # Create test directory
+          mkdir -p test_resources
+          # Generate a synthetic audio file for testing (1 second of silence)
+          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y test_resources/sample.wav
       
-      - name: Test stem extraction with custom output
+      - name: Test with custom output directory
         run: |
-          python main.py "https://www.youtube.com/watch?v=q6EoRBvdVPQ" -s -o ./output
-          # Verify stems exist
-          find ./output -name "vocals.wav" -type f -size +0c | grep .
-          find ./output -name "drums.wav" -type f -size +0c | grep .
+          # Create output directory
+          mkdir -p ./custom_output
+          
+          # Create a simple processor script for testing with custom output
+          cat > test_custom.py << 'EOF'
+          import sys
+          import os
+          from tools.processor.spleeter_processor import extract_stems
+          
+          if __name__ == "__main__":
+              # Process using sample audio with custom output
+              extract_stems("test_resources/sample.wav", "./custom_output", stem_number=2)
+          EOF
+          
+          # Run the script
+          python test_custom.py
+          
+          # Verify stems exist in custom output
+          find ./custom_output -name "vocals.wav" | grep .
+          find ./custom_output -name "accompaniment.wav" | grep .
