@@ -6,19 +6,24 @@ echo.
 
 :: Check if argument is provided
 if "%~1"=="" (
-    echo Usage: run_producer_toolkit.bat "YouTube URL" [options]
+    echo Usage: run_toolkit.bat "YouTube URL" [options]
     echo.
     echo Options:
     echo  -v    Download video
     echo  -a    Download audio
     echo  -s    Extract stems (default)
     echo  -o    Specify output directory
+    echo  -n    Number of stems (2, 4, or 5)
     echo.
-    echo Example: run_producer_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+    echo Example: run_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
     echo.
     pause
     exit /b 1
 )
+
+:: Get the root directory (parent of scripts/windows)
+set "ROOT_DIR=%~dp0..\..\"
+cd "%ROOT_DIR%"
 
 :: If no option is provided, default to stems extraction
 set OPTIONS=-s

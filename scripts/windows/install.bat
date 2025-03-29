@@ -14,6 +14,10 @@ if errorlevel 1 (
     exit /b 1
 )
 
+:: Get the root directory (parent of scripts/windows)
+set "ROOT_DIR=%~dp0..\..\"
+cd "%ROOT_DIR%"
+
 :: Run the installer script
 echo Running installation script...
 python install.py
@@ -24,6 +28,9 @@ if errorlevel 0 (
     echo.
     echo You can now use Producer Toolkit by running:
     echo python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+    echo.
+    echo Or use the provided batch file:
+    echo scripts\windows\run_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
     echo.
 ) else (
     echo.

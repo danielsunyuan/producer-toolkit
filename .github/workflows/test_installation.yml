@@ -53,6 +53,38 @@ jobs:
           # Verify stems exist
           find output -name "vocals.wav" | grep .
           find output -name "accompaniment.wav" | grep .
+          
+      - name: Set up project structure
+        run: |
+          # Create documentation directory
+          mkdir -p docs
+          echo "# Installation Guide" > docs/INSTALLATION.md
+          echo "# Usage Guide" > docs/USAGE.md
+          
+          # Set up scripts directory
+          mkdir -p scripts/windows
+          
+          # Move batch files to scripts/windows directory if they exist
+          if [ -f "install.bat" ]; then
+            mkdir -p scripts/windows
+            mv install.bat scripts/windows/
+            cp scripts/windows/install.bat scripts/windows/install.bat.bak
+            sed 's|python install.py|cd ..\\..\\ && python install.py|g' scripts/windows/install.bat.bak > scripts/windows/install.bat
+            rm scripts/windows/install.bat.bak
+          fi
+          
+          if [ -f "run_producer_toolkit.bat" ]; then
+            mkdir -p scripts/windows
+            mv run_producer_toolkit.bat scripts/windows/run_toolkit.bat
+            cp scripts/windows/run_toolkit.bat scripts/windows/run_toolkit.bat.bak
+            sed 's|python main.py|cd ..\\..\\ && python main.py|g' scripts/windows/run_toolkit.bat.bak > scripts/windows/run_toolkit.bat
+            rm scripts/windows/run_toolkit.bat.bak
+          fi
+          
+          # Verify directory structure
+          ls -la
+          ls -la docs/
+          ls -la scripts/windows/
 
   test-macos:
     runs-on: macos-latest
@@ -146,6 +178,38 @@ jobs:
           # Verify stems exist
           Get-ChildItem -Path "output" -Filter "vocals.wav" -File | Where-Object { $_.Length -gt 0 }
           Get-ChildItem -Path "output" -Filter "accompaniment.wav" -File | Where-Object { $_.Length -gt 0 }
+          
+      - name: Set up project structure
+        run: |
+          # Create documentation directory
+          mkdir -p docs
+          "# Installation Guide" | Out-File -FilePath docs/INSTALLATION.md -Encoding utf8
+          "# Usage Guide" | Out-File -FilePath docs/USAGE.md -Encoding utf8
+          
+          # Set up scripts directory
+          mkdir -p scripts/windows
+          
+          # Move batch files to scripts/windows directory if they exist
+          if (Test-Path "install.bat") {
+            mkdir -p scripts/windows -Force
+            Move-Item -Path "install.bat" -Destination "scripts/windows/"
+            $content = Get-Content "scripts/windows/install.bat"
+            $content = $content -replace "python install.py", "cd ..\\..\ && python install.py"
+            $content | Set-Content "scripts/windows/install.bat"
+          }
+          
+          if (Test-Path "run_producer_toolkit.bat") {
+            mkdir -p scripts/windows -Force
+            Move-Item -Path "run_producer_toolkit.bat" -Destination "scripts/windows/run_toolkit.bat"
+            $content = Get-Content "scripts/windows/run_toolkit.bat"
+            $content = $content -replace "python main.py", "cd ..\\..\ && python main.py"
+            $content | Set-Content "scripts/windows/run_toolkit.bat"
+          }
+          
+          # Verify directory structure
+          Get-ChildItem -Path "."
+          Get-ChildItem -Path "docs"
+          Get-ChildItem -Path "scripts/windows"
 
   # Test with custom output directory to avoid permission issues
   test-with-custom-output:
