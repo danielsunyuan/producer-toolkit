@@ -1,8 +1,6 @@
 name: Test Installation and Basic Functionality
 
 on:
-  push:
-    branches: [ main, fix-actions-tests ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:  # Allows manual triggering
