@@ -202,13 +202,17 @@ jobs:
           
       - name: Set up project structure
         run: |
-          # Create documentation directory
-          mkdir -p docs
+          # Create documentation directory if it doesn't exist
+          if (-not (Test-Path "docs")) {
+            mkdir -p docs
+          }
           "# Installation Guide" | Out-File -FilePath docs/INSTALLATION.md -Encoding utf8
           "# Usage Guide" | Out-File -FilePath docs/USAGE.md -Encoding utf8
           
-          # Set up scripts directory
-          mkdir -p scripts/windows
+          # Set up scripts directory if it doesn't exist
+          if (-not (Test-Path "scripts/windows")) {
+            mkdir -p scripts/windows
+          }
           
           # Move batch files to scripts/windows directory if they exist
           if (Test-Path "install.bat") {
@@ -350,13 +354,20 @@ jobs:
           print(f"STDOUT: {result.stdout}")
           print(f"STDERR: {result.stderr}")
           
-          # Verify expected output exists
-          expected_file = os.path.join(output_dir, "vocals.wav")
+          # Verify expected output exists in the test_audio_stems directory
+          stems_dir = os.path.join(output_dir, "test_audio_stems")
+          expected_file = os.path.join(stems_dir, "vocals.wav")
+          
+          print(f"Looking for stem files in: {stems_dir}")
+          if os.path.exists(stems_dir):
+              print(f"Directory contents: {os.listdir(stems_dir)}")
+          
           if os.path.exists(expected_file):
               print(f"Pipeline test successful: {expected_file} exists")
               sys.exit(0)
           else:
               print(f"Pipeline test failed: {expected_file} not found")
+              print(f"Available files in output dir: {os.listdir(output_dir)}")
               sys.exit(1)
           EOF
           
