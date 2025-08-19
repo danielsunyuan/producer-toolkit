@@ -1,0 +1,117 @@
+Metadata-Version: 2.4
+Name: producer-toolkit
+Version: 1.0.0
+Summary: A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter
+Home-page: https://github.com/yourusername/producer-toolkit
+Author: Daniel
+Author-email: Daniel <your-email@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yourusername/producer-toolkit
+Project-URL: Repository, https://github.com/yourusername/producer-toolkit
+Project-URL: Issues, https://github.com/yourusername/producer-toolkit/issues
+Keywords: audio,music,youtube,spleeter,stems,separation,download
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Multimedia :: Sound/Audio
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: yt-dlp>=2023.3.4
+Requires-Dist: spleeter==2.3.2
+Requires-Dist: ffmpeg-python==0.2.0
+Requires-Dist: librosa==0.8.1
+Requires-Dist: soundfile==0.12.1
+Requires-Dist: pydub==0.25.1
+Requires-Dist: norbert==0.2.1
+Requires-Dist: numpy==1.22.4
+Requires-Dist: scikit-learn==1.3.0
+Requires-Dist: tensorflow==2.13.0
+Dynamic: author
+Dynamic: home-page
+Dynamic: requires-python
+
+# Producer Toolkit
+
+A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter.
+
+## Features
+
+- Download audio or video from YouTube links
+- Extract stems (vocals, drums, bass, other) from audio files
+- Clean output format with organized file structure
+- Local model storage for faster processing
+- Cross-platform support (macOS, Linux, Windows)
+
+## Quick Start
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/producer-toolkit.git
+cd producer-toolkit
+```
+
+2. Run the installation script:
+```bash
+# On macOS/Linux
+python install.py
+
+# On Windows
+scripts\windows\install.bat
+```
+
+### Basic Usage
+
+```bash
+# Extract stems (vocals, drums, bass, other)
+python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+
+# Download audio only
+python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
+
+# Download video
+python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
+```
+
+Windows users can use the provided batch file:
+```
+scripts\windows\run_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+```
+
+## Documentation
+
+Detailed documentation is available in the `docs` directory:
+
+- [Installation Guide](docs/INSTALLATION.md) - Detailed installation instructions for all platforms
+- [Usage Guide](docs/USAGE.md) - Comprehensive usage instructions and examples
+
+## Project Structure
+
+```
+.
+├── docs/                 # Documentation
+├── main.py               # Main CLI entry point
+├── install.py            # Cross-platform installation script
+├── models/               # Where stem separation models are stored
+├── requirements.txt      # Python dependencies
+├── scripts/              # Helper scripts
+│   └── windows/          # Windows-specific scripts
+└── tools/                # Core functionality
+    ├── downloader/       # YouTube downloading tools
+    └── processor/        # Audio processing tools
+```
+
+## First-Time Use
+
+On first run, Spleeter will download pretrained models (approximately 500MB). These will be stored in the `models` directory for future use.
+
+## License
+
+[MIT License](LICENSE)
