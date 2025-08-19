@@ -7,7 +7,7 @@ name = "producer-toolkit"
 version = "1.0.0"
 description = "A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter"
 authors = [
-    {name = "Daniel", email = "your-email@example.com"},
+    {name = "Daniel", email = "danielsunyuan@gmail.com"},
 ]
 license = {text = "MIT"}
 readme = "README.md"
@@ -43,6 +43,6 @@ dependencies = [
 pt = "producer_toolkit.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/producer-toolkit"
-Repository = "https://github.com/yourusername/producer-toolkit"
-Issues = "https://github.com/yourusername/producer-toolkit/issues"
+Homepage = "https://github.com/danielsunyuan/producer-toolkit"
+Repository = "https://github.com/danielsunyuan/producer-toolkit"
+Issues = "https://github.com/danielsunyuan/producer-toolkit/issues"
