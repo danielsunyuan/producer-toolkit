@@ -22,7 +22,7 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 # Import toolkit function for stem extraction
-from tools.processor.spleeter_processor import extract_stems
+from producer_toolkit.processor.spleeter_processor import extract_stems
 
 def print_step(message):
     """Print a formatted step message."""

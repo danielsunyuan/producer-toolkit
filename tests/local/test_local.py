@@ -22,8 +22,8 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 # Import toolkit functions
-from tools.downloader.download import download_audio, download_video
-from tools.processor.spleeter_processor import extract_stems
+from producer_toolkit.downloader.download import download_audio, download_video
+from producer_toolkit.processor.spleeter_processor import extract_stems
 
 # Default test video (Yee)
 YOUTUBE_LINK = "https://youtu.be/q6EoRBvdVPQ?si=C6YYCgtwWr2oVnMr"

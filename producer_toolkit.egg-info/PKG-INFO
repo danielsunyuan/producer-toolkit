@@ -1,3 +1,41 @@
+Metadata-Version: 2.4
+Name: producer-toolkit
+Version: 1.0.0
+Summary: A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter
+Home-page: https://github.com/yourusername/producer-toolkit
+Author: Daniel
+Author-email: Daniel <your-email@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yourusername/producer-toolkit
+Project-URL: Repository, https://github.com/yourusername/producer-toolkit
+Project-URL: Issues, https://github.com/yourusername/producer-toolkit/issues
+Keywords: audio,music,youtube,spleeter,stems,separation,download
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Multimedia :: Sound/Audio
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: yt-dlp>=2023.3.4
+Requires-Dist: spleeter==2.3.2
+Requires-Dist: ffmpeg-python==0.2.0
+Requires-Dist: librosa==0.8.1
+Requires-Dist: soundfile==0.12.1
+Requires-Dist: pydub==0.25.1
+Requires-Dist: norbert==0.2.1
+Requires-Dist: numpy==1.22.4
+Requires-Dist: scikit-learn==1.3.0
+Requires-Dist: tensorflow==2.13.0
+Dynamic: author
+Dynamic: home-page
+Dynamic: requires-python
+
 # Producer Toolkit
 
 A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter.
@@ -9,35 +47,10 @@ A command-line toolkit for music producers to download audio/video from YouTube 
 - Clean output format with organized file structure
 - Local model storage for faster processing
 - Cross-platform support (macOS, Linux, Windows)
-- Available as a Python package with global `pt` command
 
 ## Quick Start
 
 ### Installation
-
-#### Option 1: Install as Python Package (Recommended)
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/producer-toolkit.git
-cd producer-toolkit
-```
-
-2. Install the package:
-```bash
-# Install in development mode (recommended for development)
-pip install -e .
-
-# Or install globally (available system-wide)
-pip install -e .
-```
-
-3. Use the `pt` command from anywhere:
-```bash
-pt --help
-```
-
-#### Option 2: Traditional Installation
 
 1. Clone the repository:
 ```bash
@@ -56,22 +69,6 @@ scripts\windows\install.bat
 
 ### Basic Usage
 
-#### Using the `pt` command (if installed as package):
-```bash
-# Extract stems (vocals, drums, bass, other)
-pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
-
-# Download audio only
-pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
-
-# Download video
-pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
-
-# Extract 4 stems
-pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -n 4
-```
-
-#### Using the traditional method:
 ```bash
 # Extract stems (vocals, drums, bass, other)
 python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
@@ -100,46 +97,15 @@ Detailed documentation is available in the `docs` directory:
 ```
 .
 ├── docs/                 # Documentation
-├── producer_toolkit/     # Main Python package
-│   ├── __init__.py      # Package initialization
-│   ├── cli.py           # Command-line interface
-│   ├── downloader/      # YouTube downloading tools
-│   └── processor/       # Audio processing tools
-├── main.py               # Legacy CLI entry point
+├── main.py               # Main CLI entry point
 ├── install.py            # Cross-platform installation script
-├── setup.py              # Python package configuration
-├── pyproject.toml        # Modern Python packaging
 ├── models/               # Where stem separation models are stored
 ├── requirements.txt      # Python dependencies
 ├── scripts/              # Helper scripts
 │   └── windows/          # Windows-specific scripts
-├── tests/                # Test suite
-└── tools/                # Legacy tools directory (deprecated)
-```
-
-## Development
-
-### Running Tests
-
-```bash
-# Run offline tests
-python -m tests.run_tests --offline
-
-# Run all tests
-python -m tests.run_tests --all
-
-# Run local tests with YouTube download
-python -m tests.run_tests --local
-```
-
-### Package Development
-
-```bash
-# Install in development mode
-pip install -e .
-
-# Test the package
-pt --help
+└── tools/                # Core functionality
+    ├── downloader/       # YouTube downloading tools
+    └── processor/        # Audio processing tools
 ```
 
 ## First-Time Use

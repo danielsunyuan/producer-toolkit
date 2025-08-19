@@ -1,0 +1,2 @@
+[console_scripts]
+pt = producer_toolkit.cli:main
