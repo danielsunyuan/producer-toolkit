@@ -301,15 +301,9 @@ jobs:
           pt --help
           
           # Test package imports
-          python -c "
-          from producer_toolkit import downloader, processor
-          print('✅ Package imports successful')
-          "
+          python -c "from producer_toolkit import downloader, processor; print('Package imports successful')"
           
           # Test CLI module
-          python -c "
-          from producer_toolkit.cli import main
-          print('✅ CLI module import successful')
-          "
+          python -c "from producer_toolkit.cli import main; print('CLI module import successful')"
           
-          print("All package functionality tests passed!")
+          echo "All package functionality tests passed!"
