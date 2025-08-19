@@ -312,4 +312,4 @@ jobs:
           print('✅ CLI module import successful')
           "
           
-          print("✅ All package functionality tests passed!")
+          print("All package functionality tests passed!")
