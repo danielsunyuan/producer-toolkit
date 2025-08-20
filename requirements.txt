@@ -8,6 +8,7 @@ librosa==0.8.1
 soundfile==0.12.1
 pydub==0.25.1
 norbert==0.2.1
+aubio>=0.4.9
 
 # Machine learning dependencies
 numpy==1.22.4

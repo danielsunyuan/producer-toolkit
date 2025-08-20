@@ -6,6 +6,9 @@ A command-line toolkit for music producers to download audio/video from YouTube 
 
 - Download audio or video from YouTube links
 - Extract stems (vocals, drums, bass, other) from audio files
+- **NEW**: Automatic BPM and key detection using aubio
+- **NEW**: Enhanced file naming with musical features (e.g., `song_128bpm_Am.wav`)
+- **NEW**: Musical analysis for both main files and individual stems
 - Clean output format with organized file structure
 - Local model storage for faster processing
 - Cross-platform support (macOS, Linux, Windows)
@@ -58,17 +61,25 @@ scripts\windows\install.bat
 
 #### Using the `pt` command (if installed as package):
 ```bash
-# Extract stems (vocals, drums, bass, other)
+# Extract stems with BPM and key analysis (default)
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
 
-# Download audio only
+# Download audio with BPM and key analysis
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
 
 # Download video
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
 
-# Extract 4 stems
+# Extract 4 stems with musical analysis
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -n 4
+
+# Disable BPM/key analysis for faster processing
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --no-analysis
+
+# Example output filenames:
+# song_title_125bpm_Am.wav (main audio)
+# vocals_125bpm_Am.wav (vocal stem)
+# drums_125bpm_Am.wav (drum stem)
 ```
 
 #### Using the traditional method:
@@ -144,7 +155,31 @@ pt --help
 
 ## First-Time Use
 
-On first run, Spleeter will download pretrained models (approximately 500MB). These will be stored in the `models` directory for future use.
+## Musical Analysis
+
+The toolkit now includes automatic BPM (beats per minute) and key detection using [aubio](https://aubio.org/), a powerful audio analysis library. This feature:
+
+- Analyzes audio files to detect tempo and musical key
+- Automatically includes this information in filenames
+- Works for both main downloads and individual stems
+- Can be disabled with `--no-analysis` for faster processing
+
+### Example Output
+
+With musical analysis enabled (default):
+```
+song_title_128bmp_C.wav           # Main audio file
+vocals_128bpm_C.wav               # Vocal stem
+drums_128bpm_C.wav                # Drum stem  
+bass_128bpm_C.wav                 # Bass stem
+other_128bpm_C.wav                # Other instruments stem
+```
+
+## First-Time Use
+
+On first run:
+1. Spleeter will download pretrained models (approximately 500MB). These will be stored in the `models` directory for future use.
+2. Aubio will be initialized for audio analysis (requires system-level aubio installation on some platforms).
 
 ## License
 

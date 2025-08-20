@@ -37,6 +37,8 @@ def main():
     parser.add_argument("-o", "--output-dir", dest="output_dir", help="Specify output directory")
     parser.add_argument("-n", "--num-stems", dest="num_stems", type=int, default=2, 
                        choices=[2, 4, 5], help="Number of stems to extract (2, 4, or 5)")
+    parser.add_argument("--no-analysis", action="store_true", 
+                       help="Disable BPM and key analysis (faster but no enhanced filenames)")
     
     # Hidden testing arguments (not shown in help)
     parser.add_argument("--test", action="store_true", help=argparse.SUPPRESS, 
@@ -81,7 +83,8 @@ def main():
                 
         # Standard mode - download audio
         print("Downloading audio...")
-        audio_file = download_audio(options.link, output_dir)
+        analyze_features = not options.no_analysis
+        audio_file = download_audio(options.link, output_dir, analyze_features=analyze_features)
         if audio_file and os.path.exists(audio_file):
             print(f"Audio saved at: {audio_file}")
         else:
@@ -134,10 +137,12 @@ def main():
                 
                 # Extract stems using Spleeter with specified stem count
                 print("Processing audio with Spleeter...")
+                analyze_features = not options.no_analysis
                 extract_stems(
                     final_audio_path, 
                     stems_output_dir, 
-                    stem_number=options.num_stems
+                    stem_number=options.num_stems,
+                    analyze_features=analyze_features
                 )
                 # File is provided externally, no cleanup needed
                 print("Test completed successfully.")
@@ -170,10 +175,12 @@ def main():
             
             # Extract stems using Spleeter with specified stem count
             print("Processing audio with Spleeter...")
+            analyze_features = not options.no_analysis
             extract_stems(
                 final_audio_path, 
                 stems_output_dir, 
-                stem_number=options.num_stems
+                stem_number=options.num_stems,
+                analyze_features=analyze_features
             )
             # Don't repeat the success message, it's already printed in extract_stems()
         except Exception as e:
@@ -203,7 +210,8 @@ def main():
         
         # Default to audio download if no option is selected
         print("Downloading audio (default)...")
-        audio_file = download_audio(options.link, output_dir)
+        analyze_features = not options.no_analysis
+        audio_file = download_audio(options.link, output_dir, analyze_features=analyze_features)
         if audio_file and os.path.exists(audio_file):
             print(f"Audio saved at: {audio_file}")
         else:
