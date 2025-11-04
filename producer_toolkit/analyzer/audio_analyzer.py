@@ -113,10 +113,11 @@ class AudioAnalyzer:
                 # Fallback for older librosa versions
                 tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr, hop_length=self.hop_length)
             
-            if tempo > 0 and len(tempo) > 0:
-                # Handle both scalar and array return values
-                if isinstance(tempo, np.ndarray):
+            # Handle both scalar and array return values
+            if isinstance(tempo, np.ndarray):
+                if tempo.size > 0 and tempo[0] > 0:
                     return float(tempo[0])
+            elif isinstance(tempo, (int, float)) and tempo > 0:
                 return float(tempo)
         except Exception as e:
             logger.debug(f"Onset-based tempo detection failed: {e}")
