@@ -25,11 +25,10 @@ Description-Content-Type: text/markdown
 Requires-Dist: yt-dlp>=2023.3.4
 Requires-Dist: demucs>=4.0.0
 Requires-Dist: ffmpeg-python==0.2.0
-Requires-Dist: librosa==0.8.1
+Requires-Dist: librosa>=0.10.0
 Requires-Dist: soundfile==0.12.1
 Requires-Dist: pydub==0.25.1
 Requires-Dist: numpy>=1.22.4
-Requires-Dist: aubio>=0.4.9
 Requires-Dist: torch>=2.0.0
 Requires-Dist: torchaudio>=2.0.0
 Requires-Dist: torchcodec>=0.8.0
