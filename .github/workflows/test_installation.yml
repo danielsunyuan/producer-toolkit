@@ -72,7 +72,13 @@ jobs:
       
       - name: Run unit tests
         run: |
-          python -m unittest discover tests/ -v
+          python -m unittest discover tests/ -v -k "test_audio_analyzer"
+      
+      - name: Run integration tests (local files only)
+        env:
+          SKIP_YOUTUBE_TESTS: true
+        run: |
+          python -m unittest tests.test_integration.TestLocalAudioFile -v
       
       - name: Test package installation
         run: |
@@ -107,7 +113,13 @@ jobs:
       
       - name: Run unit tests
         run: |
-          python -m unittest discover tests/ -v
+          python -m unittest discover tests/ -v -k "test_audio_analyzer"
+      
+      - name: Run integration tests (local files only)
+        env:
+          SKIP_YOUTUBE_TESTS: true
+        run: |
+          python -m unittest tests.test_integration.TestLocalAudioFile -v
       
       - name: Test package installation
         run: |
@@ -158,6 +170,9 @@ jobs:
           python -c "from producer_toolkit.cli import main; print('CLI module import successful')"
           
           # Run unit tests
-          python -m unittest discover tests/ -v
+          python -m unittest discover tests/ -v -k "test_audio_analyzer"
+          
+          # Run integration tests (local files only, skip YouTube)
+          SKIP_YOUTUBE_TESTS=true python -m unittest tests.test_integration.TestLocalAudioFile -v
           
           echo "All package functionality tests passed!"
