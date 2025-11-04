@@ -1,6 +1,6 @@
 # Producer Toolkit
 
-A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs.
+A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs (default) or Spleeter.
 
 ## Features
 
@@ -70,11 +70,14 @@ pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
 # Download video
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
 
-# Extract 4 stems with musical analysis (default)
+# Extract 4 stems with musical analysis (default: Demucs)
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
 
 # Extract 2 stems (vocals and accompaniment)
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -n 2
+
+# Use Spleeter engine (faster, lower quality)
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --engine spleeter
 
 # Disable BPM/key analysis for faster processing
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --no-analysis
