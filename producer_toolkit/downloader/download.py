@@ -2,6 +2,8 @@ import os
 import shutil
 import yt_dlp
 import tempfile
+import sys
+from io import StringIO
 from ..analyzer.audio_analyzer import analyze_audio, generate_filename_with_features
 
 def download_video(url, output_path=None):
@@ -86,6 +88,7 @@ def download_audio(url, output_path=None, analyze_features=True):
         'noplaylist': True,  # Only download the video, not the entire playlist
         'quiet': True,  # Suppress yt-dlp output
         'no_warnings': True,  # Suppress warnings
+        'verbose': False,  # No verbose output
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',  # Convert to WAV
             'preferredcodec': 'wav',
@@ -98,12 +101,27 @@ def download_audio(url, output_path=None, analyze_features=True):
         ],
         # Dynamically find ffmpeg path
         'ffmpeg_location': shutil.which('ffmpeg'),
+        # Suppress progress hooks
+        'progress_hooks': [],
     }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info_dict = ydl.extract_info(url, download=True)
-        # Get the actual title to build the correct return path
-        if info_dict and 'title' in info_dict:
+    # Suppress all yt-dlp output completely
+    import logging
+    import warnings
+    
+    # Suppress logging
+    logging.getLogger('yt_dlp').setLevel(logging.CRITICAL)
+    
+    # Suppress warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        
+        # Use quiet mode and suppress progress
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(url, download=True)
+    
+    # Get the actual title to build the correct return path
+    if info_dict and 'title' in info_dict:
             # Replace the template with the actual title
             if '%(title)s' in temp_return_path:
                 temp_file_path = temp_return_path.replace('%(title)s', info_dict['title'])

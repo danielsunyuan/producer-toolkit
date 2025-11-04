@@ -3,6 +3,7 @@ README.md
 pyproject.toml
 requirements.txt
 setup.py
+docs/AUBIO_FEATURES.md
 docs/INSTALLATION.md
 docs/USAGE.md
 producer_toolkit/__init__.py
@@ -14,12 +15,19 @@ producer_toolkit.egg-info/entry_points.txt
 producer_toolkit.egg-info/not-zip-safe
 producer_toolkit.egg-info/requires.txt
 producer_toolkit.egg-info/top_level.txt
+producer_toolkit/analyzer/__init__.py
+producer_toolkit/analyzer/audio_analyzer.py
 producer_toolkit/downloader/__init__.py
 producer_toolkit/downloader/download.py
 producer_toolkit/processor/__init__.py
+producer_toolkit/processor/demucs_processor.py
 producer_toolkit/processor/spleeter_processor.py
+producer_toolkit/utils/__init__.py
+producer_toolkit/utils/loading.py
 tests/__init__.py
 tests/run_tests.py
+tests/test_aubio_integration.py
+tests/test_audio_analyzer.py
 tests/ci/__init__.py
 tests/ci/scripts/__init__.py
 tests/ci/scripts/run_ci_test.py
