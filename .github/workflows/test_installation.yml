@@ -5,7 +5,6 @@ on:
     branches: [ main ]
   workflow_dispatch:  # Allows manual triggering
 
-# This ensures directory creation works on all platforms
 defaults:
   run:
     shell: bash
@@ -14,12 +13,12 @@ jobs:
   test-ubuntu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: "3.11"
       
       - name: Install FFmpeg
         run: |
@@ -28,93 +27,39 @@ jobs:
       
       - name: Install package dependencies
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
           pip install -e .
       
-      - name: Generate test audio file
+      - name: Run unit tests
         run: |
-          # Create test directory
-          mkdir -p tests/ci/resources
-          # Generate a synthetic audio file for testing (1 second of silence)
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y tests/ci/resources/sample.wav
+          python -m unittest discover tests/ -v
       
-      - name: Setup mock test for installation verification
-        run: |
-          mkdir -p output
-          # Create mock files to verify structure without downloading models
-          mkdir -p output/vocals
-          mkdir -p output/accompaniment
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y output/vocals.wav
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y output/accompaniment.wav
-          
-          # Create mock test script
-          cat > test.py << 'EOF'
-          import sys
-          import os
-          
-          print("Mock test successful - would call extract_stems() in a real scenario")
-          
-          # In a real scenario, we would call:
-          # from producer_toolkit.processor.spleeter_processor import extract_stems
-          # extract_stems("tests/ci/resources/sample.wav", "output", stem_number=2)
-          EOF
-          
-          # Run the script
-          python test.py
-          
-          # Verify mock stems exist
-          find output -name "vocals.wav" | grep .
-          find output -name "accompaniment.wav" | grep .
-          
       - name: Test package installation
         run: |
-          # Test that the pt command is available
-          pt --help
+          # Test that the ptk command is available
+          ptk --help
           
           # Test that we can import the package
           python -c "from producer_toolkit import downloader, processor; print('Package import successful')"
-          
-      - name: Set up project structure
+      
+      - name: Verify project structure
         run: |
-          # Create documentation directory
-          mkdir -p docs
-          echo "# Installation Guide" > docs/INSTALLATION.md
-          echo "# Usage Guide" > docs/USAGE.md
-          
-          # Set up scripts directory
-          mkdir -p scripts/windows
-          
-          # Move batch files to scripts/windows directory if they exist
-          if [ -f "install.bat" ]; then
-            mkdir -p scripts/windows
-            mv install.bat scripts/windows/
-            cp scripts/windows/install.bat scripts/windows/install.bat.bak
-            sed 's|python install.py|cd ..\\..\\ && python install.py|g' scripts/windows/install.bat.bak > scripts/windows/install.bat
-            rm scripts/windows/install.bat.bak
-          fi
-          
-          if [ -f "run_producer_toolkit.bat" ]; then
-            mkdir -p scripts/windows
-            mv run_producer_toolkit.bat scripts/windows/run_toolkit.bat
-            cp scripts/windows/run_toolkit.bat scripts/windows/run_toolkit.bat.bak
-            sed 's|python main.py|cd ..\\..\\ && python main.py|g' scripts/windows/run_toolkit.bat.bak > scripts/windows/run_toolkit.bat
-            rm scripts/windows/run_toolkit.bat.bak
-          fi
-          
-          # Verify directory structure
-          ls -la
-          ls -la docs/
-          ls -la scripts/windows/
+          # Verify main package structure
+          ls -la producer_toolkit/
+          ls -la producer_toolkit/analyzer/
+          ls -la producer_toolkit/downloader/
+          ls -la producer_toolkit/processor/
+          ls -la producer_toolkit/utils/
 
   test-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: "3.11"
       
       - name: Install FFmpeg
         run: |
@@ -122,48 +67,17 @@ jobs:
       
       - name: Install package dependencies
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
           pip install -e .
       
-      - name: Generate test audio file
+      - name: Run unit tests
         run: |
-          # Create test directory
-          mkdir -p tests/ci/resources
-          # Generate a synthetic audio file for testing (1 second of silence)
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y tests/ci/resources/sample.wav
+          python -m unittest discover tests/ -v
       
-      - name: Setup mock test for installation verification
-        run: |
-          mkdir -p output
-          # Create mock files to verify structure without downloading models
-          mkdir -p output/vocals
-          mkdir -p output/accompaniment
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y output/vocals.wav
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y output/accompaniment.wav
-          
-          # Create mock test script
-          cat > test.py << 'EOF'
-          import sys
-          import os
-          
-          print("Mock test successful - would call extract_stems() in a real scenario")
-          
-          # In a real scenario, we would call:
-          # from producer_toolkit.processor.spleeter_processor import extract_stems
-          # extract_stems("tests/ci/resources/sample.wav", "output", stem_number=2)
-          EOF
-          
-          # Run the script
-          python test.py
-          
-          # Verify mock stems exist
-          find output -name "vocals.wav" | grep .
-          find output -name "accompaniment.wav" | grep .
-          
       - name: Test package installation
         run: |
-          # Test that the pt command is available
-          pt --help
+          # Test that the ptk command is available
+          ptk --help
           
           # Test that we can import the package
           python -c "from producer_toolkit import downloader, processor; print('Package import successful')"
@@ -174,116 +88,53 @@ jobs:
       run:
         shell: pwsh
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: "3.11"
       
       - name: Install FFmpeg
-        # Using Chocolatey to install FFmpeg on Windows
         run: |
           choco install ffmpeg -y
-          # Add to PATH for this session
           echo "$env:ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       
       - name: Install package dependencies
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
           pip install -e .
       
-      - name: Generate test audio file
+      - name: Run unit tests
         run: |
-          # Use PowerShell New-Item to create directories safely
-          New-Item -Path "tests" -ItemType Directory -Force -ErrorAction SilentlyContinue
-          New-Item -Path "tests/ci" -ItemType Directory -Force -ErrorAction SilentlyContinue
-          New-Item -Path "tests/ci/resources" -ItemType Directory -Force -ErrorAction SilentlyContinue
-          # Generate a synthetic audio file for testing (1 second of silence)
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y tests/ci/resources/sample.wav
+          python -m unittest discover tests/ -v
       
-      - name: Setup mock test for installation verification
-        run: |
-          # Use PowerShell New-Item to create directories safely
-          New-Item -Path "output" -ItemType Directory -Force -ErrorAction SilentlyContinue
-          New-Item -Path "output/vocals" -ItemType Directory -Force -ErrorAction SilentlyContinue
-          New-Item -Path "output/accompaniment" -ItemType Directory -Force -ErrorAction SilentlyContinue
-          # Create mock files to verify structure without downloading models
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y output/vocals.wav
-          ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 1 -c:a pcm_s16le -y output/accompaniment.wav
-          
-          # Create mock test script
-          @"
-          import sys
-          import os
-          
-          print("Mock test successful - would call extract_stems() in a real scenario")
-          
-          # In a real scenario, we would call:
-          # from producer_toolkit.processor.spleeter_processor import extract_stems
-          # extract_stems("tests/ci/resources/sample.wav", "output", stem_number=2)
-          "@ | Out-File -FilePath test.py -Encoding utf8
-          
-          # Run the script
-          python test.py
-          
-          # Verify mock stems exist
-          Get-ChildItem -Path "output" -Filter "vocals.wav" -File | Where-Object { $_.Length -gt 0 }
-          Get-ChildItem -Path "output" -Filter "accompaniment.wav" -File | Where-Object { $_.Length -gt 0 }
-          
       - name: Test package installation
         run: |
-          # Test that the pt command is available
-          pt --help
+          # Test that the ptk command is available
+          ptk --help
           
           # Test that we can import the package
           python -c "from producer_toolkit import downloader, processor; print('Package import successful')"
-          
-      - name: Set up project structure
+      
+      - name: Verify project structure
         run: |
-          # Use PowerShell New-Item to create directories safely
-          New-Item -Path "docs" -ItemType Directory -Force -ErrorAction SilentlyContinue
-          "# Installation Guide" | Out-File -FilePath docs/INSTALLATION.md -Encoding utf8
-          "# Usage Guide" | Out-File -FilePath docs/USAGE.md -Encoding utf8
-          
-          # Set up scripts directory if it doesn't exist
-          New-Item -Path "scripts" -ItemType Directory -Force -ErrorAction SilentlyContinue
-          New-Item -Path "scripts/windows" -ItemType Directory -Force -ErrorAction SilentlyContinue
-          
-          # Move batch files to scripts/windows directory if they exist
-          if (Test-Path "install.bat") {
-            # Ensure directory exists
-            New-Item -Path "scripts/windows" -ItemType Directory -Force -ErrorAction SilentlyContinue
-            Move-Item -Path "install.bat" -Destination "scripts/windows/"
-            $content = Get-Content "scripts/windows/install.bat"
-            $content = $content -replace "python install.py", "cd ..\\..\ && python install.py"
-            $content | Set-Content "scripts/windows/install.bat"
-          }
-          
-          if (Test-Path "run_producer_toolkit.bat") {
-            # Ensure directory exists
-            New-Item -Path "scripts/windows" -ItemType Directory -Force -ErrorAction SilentlyContinue
-            Move-Item -Path "run_producer_toolkit.bat" -Destination "scripts/windows/run_toolkit.bat"
-            $content = Get-Content "scripts/windows/run_toolkit.bat"
-            $content = $content -replace "python main.py", "cd ..\\..\ && python main.py"
-            $content | Set-Content "scripts/windows/run_toolkit.bat"
-          }
-          
-          # Verify directory structure
-          Get-ChildItem -Path "."
-          Get-ChildItem -Path "docs"
-          Get-ChildItem -Path "scripts/windows"
+          # Verify main package structure
+          Get-ChildItem -Path "producer_toolkit"
+          Get-ChildItem -Path "producer_toolkit/analyzer"
+          Get-ChildItem -Path "producer_toolkit/downloader"
+          Get-ChildItem -Path "producer_toolkit/processor"
+          Get-ChildItem -Path "producer_toolkit/utils"
 
-  # Test full pipeline functionality
   test-pipeline:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: "3.11"
       
       - name: Install FFmpeg
         run: |
@@ -292,18 +143,21 @@ jobs:
       
       - name: Install package dependencies
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
           pip install -e .
       
       - name: Test package functionality
         run: |
-          # Test that the pt command works
-          pt --help
+          # Test that the ptk command works
+          ptk --help
           
           # Test package imports
           python -c "from producer_toolkit import downloader, processor; print('Package imports successful')"
           
           # Test CLI module
           python -c "from producer_toolkit.cli import main; print('CLI module import successful')"
+          
+          # Run unit tests
+          python -m unittest discover tests/ -v
           
           echo "All package functionality tests passed!"
