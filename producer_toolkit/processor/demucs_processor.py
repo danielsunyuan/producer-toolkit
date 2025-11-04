@@ -5,6 +5,7 @@ import logging
 import subprocess
 from pathlib import Path
 from ..analyzer.audio_analyzer import analyze_audio, generate_filename_with_features
+from ..utils.loading import Spinner
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -35,16 +36,21 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None, analyz
     
     # Analyze audio features first if requested
     bpm, key = None, None
+    analysis_spinner = None
     if analyze_features:
         try:
-            print("Analyzing audio features before stem separation...")
+            analysis_spinner = Spinner("🎵 Analyzing audio features")
+            analysis_spinner.start()
             bpm, key = analyze_audio(audio_path)
-            print(f"Detected: {bpm} BPM, Key: {key}")
+            analysis_spinner.stop(f"✅ Detected: {bpm} BPM, Key: {key}")
         except Exception as e:
-            print(f"Warning: Audio analysis failed ({str(e)}), proceeding without features")
+            if analysis_spinner:
+                analysis_spinner.stop()
+            print(f"⚠️  Warning: Audio analysis failed ({str(e)}), proceeding without features")
             analyze_features = False
     
-    print(f"Processing stems with Demucs... (this may take a moment)")
+    spinner = Spinner("🔧 Processing stems with Demucs")
+    spinner.start()
     
     # Create a temporary directory for Demucs output
     temp_output = os.path.join(output_dir, "_temp_demucs")
@@ -65,13 +71,17 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None, analyz
         if models_dir:
             env['DEMUCS_MODEL_DIR'] = models_dir
         
-        # Run demucs
+        # Run demucs (suppress output for cleaner UX)
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            env=env
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
         )
+        
+        spinner.stop()
         
         if result.returncode != 0:
             raise Exception(f"Demucs failed: {result.stderr}")
@@ -101,7 +111,7 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None, analyz
             # Copy vocals
             if os.path.exists(vocals_path):
                 shutil.copy(vocals_path, os.path.join(output_dir, vocals_filename))
-                print(f"✓ Created {vocals_filename}")
+                print(f"  ✓ {vocals_filename}")
             
             # Create no_vocals by mixing drums, bass, and other
             try:
@@ -123,7 +133,7 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None, analyz
                 # Write the mixed accompaniment
                 no_vocals_path = os.path.join(output_dir, no_vocals_filename)
                 sf.write(no_vocals_path, no_vocals, sr)
-                print(f"✓ Created {no_vocals_filename}")
+                print(f"  ✓ {no_vocals_filename}")
                 
             except Exception as e:
                 print(f"Warning: Could not create no_vocals stem: {str(e)}")
@@ -145,15 +155,15 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None, analyz
                     
                     # Copy each stem file to the output directory
                     shutil.copy(src_path, dst_path)
-                    print(f"✓ Created {os.path.basename(dst_path)}")
+                    print(f"  ✓ {os.path.basename(dst_path)}")
         
         # Clean up temp directory
         shutil.rmtree(temp_output, ignore_errors=True)
         
         if analyze_features and bpm is not None and key is not None:
-            print(f"✅ Audio successfully split into {stem_number} stems with features ({bpm} BPM, {key})")
+            print(f"✅ Successfully split into {stem_number} stems ({bpm} BPM, {key})")
         else:
-            print(f"✅ Audio successfully split into {stem_number} stems")
+            print(f"✅ Successfully split into {stem_number} stems")
         
         return output_dir
         

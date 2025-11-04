@@ -84,6 +84,8 @@ def download_audio(url, output_path=None, analyze_features=True):
         'format': 'bestaudio[ext=m4a]/bestaudio/best',  # Best available audio
         'outtmpl': temp_output,  # Output template
         'noplaylist': True,  # Only download the video, not the entire playlist
+        'quiet': True,  # Suppress yt-dlp output
+        'no_warnings': True,  # Suppress warnings
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',  # Convert to WAV
             'preferredcodec': 'wav',
@@ -115,9 +117,11 @@ def download_audio(url, output_path=None, analyze_features=True):
     # Analyze audio features if the file exists
     if os.path.exists(temp_file_path):
         try:
-            print("Analyzing audio features (BPM and key)...")
+            from ..utils.loading import Spinner
+            spinner = Spinner("🎵 Analyzing audio features (BPM and key)")
+            spinner.start()
             bpm, key = analyze_audio(temp_file_path)
-            print(f"Detected: {bpm} BPM, Key: {key}")
+            spinner.stop(f"✅ Detected: {bpm} BPM, Key: {key}")
             
             # Generate enhanced filename
             original_filename = os.path.basename(temp_file_path)

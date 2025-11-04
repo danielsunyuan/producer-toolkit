@@ -16,7 +16,9 @@ from pathlib import Path
 
 # Import from the package
 from .downloader.download import download_audio, download_video
-from .processor.demucs_processor import extract_stems
+from .processor.demucs_processor import extract_stems as extract_stems_demucs
+from .processor.spleeter_processor import extract_stems as extract_stems_spleeter
+from .utils.loading import Spinner
 
 def main():
     """
@@ -39,6 +41,8 @@ def main():
                        choices=[2, 4], help="Number of stems to extract (2 or 4, default: 4)")
     parser.add_argument("--no-analysis", action="store_true", 
                        help="Disable BPM and key analysis (faster but no enhanced filenames)")
+    parser.add_argument("--engine", choices=["demucs", "spleeter"], default="demucs",
+                       help="Stem separation engine to use (default: demucs)")
     
     # Hidden testing arguments (not shown in help)
     parser.add_argument("--test", action="store_true", help=argparse.SUPPRESS, 
@@ -82,13 +86,20 @@ def main():
                 return 1
                 
         # Standard mode - download audio
-        print("Downloading audio...")
-        analyze_features = not options.no_analysis
-        audio_file = download_audio(options.link, output_dir, analyze_features=analyze_features)
-        if audio_file and os.path.exists(audio_file):
-            print(f"Audio saved at: {audio_file}")
-        else:
-            print("Audio download failed.")
+        spinner = Spinner("📥 Downloading audio")
+        spinner.start()
+        try:
+            analyze_features = not options.no_analysis
+            audio_file = download_audio(options.link, output_dir, analyze_features=analyze_features)
+            spinner.stop()
+            if audio_file and os.path.exists(audio_file):
+                print(f"✅ Audio saved at: {audio_file}")
+            else:
+                print("❌ Audio download failed.")
+                return 1
+        except Exception as e:
+            spinner.stop()
+            print(f"❌ Error: {str(e)}")
             return 1
     
     elif options.video:
@@ -111,12 +122,19 @@ def main():
                 return 1
         
         # Standard mode - download video
-        print("Downloading video...")
-        video_file = download_video(options.link, output_dir)
-        if video_file and os.path.exists(video_file):
-            print(f"Video saved at: {video_file}")
-        else:
-            print("Video download failed.")
+        spinner = Spinner("📥 Downloading video")
+        spinner.start()
+        try:
+            video_file = download_video(options.link, output_dir)
+            spinner.stop()
+            if video_file and os.path.exists(video_file):
+                print(f"✅ Video saved at: {video_file}")
+            else:
+                print("❌ Video download failed.")
+                return 1
+        except Exception as e:
+            spinner.stop()
+            print(f"❌ Error: {str(e)}")
             return 1
     
     elif options.stems:
@@ -135,10 +153,12 @@ def main():
                 stems_output_dir = os.path.join(output_dir, f"{filename}_stems")
                 os.makedirs(stems_output_dir, exist_ok=True)
                 
-                # Extract stems using Demucs with specified stem count
-                print("Processing audio with Demucs...")
+                # Extract stems with specified engine
+                engine_name = options.engine.capitalize()
+                print(f"🔧 Using {engine_name} engine")
                 analyze_features = not options.no_analysis
-                extract_stems(
+                extract_stems_func = extract_stems_demucs if options.engine == "demucs" else extract_stems_spleeter
+                extract_stems_func(
                     final_audio_path, 
                     stems_output_dir, 
                     stem_number=options.num_stems,
@@ -152,45 +172,45 @@ def main():
                 return 1
         
         # Standard mode - download and process
-        print("Downloading audio for stem separation...")
+        engine_name = options.engine.capitalize()
+        print(f"🎵 Starting stem separation pipeline with {engine_name}")
         
         # Use a well-defined temp directory for download only
         temp_audio_dir = tempfile.gettempdir()  
         final_audio_path = None
         
         try:
-            print(f"Downloading audio to: {temp_audio_dir} ...")
-            final_audio_path = download_audio(options.link, temp_audio_dir)
+            # Stage 1: Download audio
+            spinner = Spinner("📥 Downloading audio from YouTube")
+            spinner.start()
+            final_audio_path = download_audio(options.link, temp_audio_dir, analyze_features=False)
+            spinner.stop()
             
             # Ensure the file exists and is not empty
             if not final_audio_path or not os.path.exists(final_audio_path) or os.path.getsize(final_audio_path) == 0:
                 raise ValueError("Download failed or file is empty.")
-            
-            print(f"Audio downloaded to temp file: {final_audio_path}")
             
             # Get the filename without extension to use as output directory name
             filename = os.path.splitext(os.path.basename(final_audio_path))[0]
             stems_output_dir = os.path.join(output_dir, f"{filename}_stems")
             os.makedirs(stems_output_dir, exist_ok=True)
             
-            # Extract stems using Demucs with specified stem count
-            print("Processing audio with Demucs...")
+            # Stage 2: Extract stems
             analyze_features = not options.no_analysis
-            extract_stems(
+            extract_stems_func = extract_stems_demucs if options.engine == "demucs" else extract_stems_spleeter
+            extract_stems_func(
                 final_audio_path, 
                 stems_output_dir, 
                 stem_number=options.num_stems,
                 analyze_features=analyze_features
             )
-            # Don't repeat the success message, it's already printed in extract_stems()
         except Exception as e:
-            print(f"Error during processing: {str(e)}")
+            print(f"❌ Error during processing: {str(e)}")
             return 1
         finally:
             # Cleanup the temporary audio file
             if final_audio_path and os.path.exists(final_audio_path):
                 os.remove(final_audio_path)
-                print("Temporary audio file removed.")
     else:
         # Test mode with audio download
         if options.test and options.test_file:
@@ -209,13 +229,20 @@ def main():
                 return 1
         
         # Default to audio download if no option is selected
-        print("Downloading audio (default)...")
-        analyze_features = not options.no_analysis
-        audio_file = download_audio(options.link, output_dir, analyze_features=analyze_features)
-        if audio_file and os.path.exists(audio_file):
-            print(f"Audio saved at: {audio_file}")
-        else:
-            print("Audio download failed.")
+        spinner = Spinner("📥 Downloading audio")
+        spinner.start()
+        try:
+            analyze_features = not options.no_analysis
+            audio_file = download_audio(options.link, output_dir, analyze_features=analyze_features)
+            spinner.stop()
+            if audio_file and os.path.exists(audio_file):
+                print(f"✅ Audio saved at: {audio_file}")
+            else:
+                print("❌ Audio download failed.")
+                return 1
+        except Exception as e:
+            spinner.stop()
+            print(f"❌ Error: {str(e)}")
             return 1
     
     # If we reached here, everything worked
