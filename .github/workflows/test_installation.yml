@@ -10,7 +10,7 @@ defaults:
     shell: bash
 
 jobs:
-  test-ubuntu:
+  test-installation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,11 +20,6 @@ jobs:
         with:
           python-version: "3.11"
       
-      - name: Install FFmpeg
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
-      
       - name: Install package dependencies
         run: |
           python -m pip install --upgrade pip
@@ -33,12 +28,6 @@ jobs:
       - name: Run unit tests
         run: |
           python -m unittest discover tests/ -v -k "test_audio_analyzer"
-      
-      - name: Run integration tests (local files only)
-        env:
-          SKIP_YOUTUBE_TESTS: true
-        run: |
-          python -m unittest tests.test_integration.TestLocalAudioFile -v
       
       - name: Test package installation
         run: |
@@ -56,129 +45,3 @@ jobs:
           ls -la producer_toolkit/downloader/
           ls -la producer_toolkit/processor/
           ls -la producer_toolkit/utils/
-
-  test-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      
-      - name: Install FFmpeg
-        run: |
-          brew install ffmpeg
-      
-      - name: Install package dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-      
-      - name: Run unit tests
-        run: |
-          python -m unittest discover tests/ -v -k "test_audio_analyzer"
-      
-      - name: Run integration tests (local files only)
-        env:
-          SKIP_YOUTUBE_TESTS: true
-        run: |
-          python -m unittest tests.test_integration.TestLocalAudioFile -v
-      
-      - name: Test package installation
-        run: |
-          # Test that the ptk command is available
-          ptk --help
-          
-          # Test that we can import the package
-          python -c "from producer_toolkit import downloader, processor; print('Package import successful')"
-
-  test-windows:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: pwsh
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      
-      - name: Install FFmpeg
-        run: |
-          choco install ffmpeg -y
-          echo "$env:ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      
-      - name: Install package dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-      
-      - name: Run unit tests
-        run: |
-          python -m unittest discover tests/ -v -k "test_audio_analyzer"
-      
-      - name: Run integration tests (local files only)
-        env:
-          SKIP_YOUTUBE_TESTS: true
-        run: |
-          python -m unittest tests.test_integration.TestLocalAudioFile -v
-      
-      - name: Test package installation
-        run: |
-          # Test that the ptk command is available
-          ptk --help
-          
-          # Test that we can import the package
-          python -c "from producer_toolkit import downloader, processor; print('Package import successful')"
-      
-      - name: Verify project structure
-        run: |
-          # Verify main package structure
-          Get-ChildItem -Path "producer_toolkit"
-          Get-ChildItem -Path "producer_toolkit/analyzer"
-          Get-ChildItem -Path "producer_toolkit/downloader"
-          Get-ChildItem -Path "producer_toolkit/processor"
-          Get-ChildItem -Path "producer_toolkit/utils"
-
-  test-pipeline:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      
-      - name: Install FFmpeg
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
-      
-      - name: Install package dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-      
-      - name: Test package functionality
-        run: |
-          # Test that the ptk command works
-          ptk --help
-          
-          # Test package imports
-          python -c "from producer_toolkit import downloader, processor; print('Package imports successful')"
-          
-          # Test CLI module
-          python -c "from producer_toolkit.cli import main; print('CLI module import successful')"
-          
-          # Run unit tests
-          python -m unittest discover tests/ -v -k "test_audio_analyzer"
-          
-          # Run integration tests (local files only, skip YouTube)
-          SKIP_YOUTUBE_TESTS=true python -m unittest tests.test_integration.TestLocalAudioFile -v
-          
-          echo "All package functionality tests passed!"

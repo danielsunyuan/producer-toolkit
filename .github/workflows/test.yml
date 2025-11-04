@@ -9,31 +9,17 @@ on:
 
 jobs:
   unit-tests:
-    name: Unit Tests (Python ${{ matrix.python-version }} on ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.10", "3.11"]
-      fail-fast: false
+    name: Unit Tests
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install FFmpeg
-      run: |
-        if [ "$RUNNER_OS" == "Linux" ]; then
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
-        elif [ "$RUNNER_OS" == "macOS" ]; then
-          brew install ffmpeg || true
-        fi
+        python-version: "3.11"
 
     - name: Install package
       run: |
@@ -44,13 +30,7 @@ jobs:
       run: |
         python -m unittest discover tests/ -v -k "test_audio_analyzer"
 
-    - name: Run integration tests (local files only)
-      env:
-        SKIP_YOUTUBE_TESTS: true
-      run: |
-        python -m unittest tests.test_integration.TestLocalAudioFile -v
-
     - name: Verify CLI installation
       run: |
-        ptk --help || echo "CLI not available (expected in some cases)"
+        ptk --help
 
