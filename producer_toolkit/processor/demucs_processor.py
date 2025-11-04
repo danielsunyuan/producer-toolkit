@@ -76,9 +76,7 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None, analyz
             cmd,
             capture_output=True,
             text=True,
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            env=env
         )
         
         spinner.stop()
