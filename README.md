@@ -1,15 +1,18 @@
 # Producer Toolkit
 
-A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter.
+A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs (default) or Spleeter.
 
 ## Features
 
 - Download audio or video from YouTube links
 - Extract stems (vocals, drums, bass, other) from audio files
+- Automatic BPM and key detection using librosa
+- Enhanced file naming with musical features (e.g., `song_128bpm_Am.wav`)
+- Musical analysis for both main files and individual stems
 - Clean output format with organized file structure
 - Local model storage for faster processing
 - Cross-platform support (macOS, Linux, Windows)
-- Available as a Python package with global `pt` command
+- Available as a Python package with global `ptk` command
 
 ## Quick Start
 
@@ -32,43 +35,40 @@ pip install -e .
 pip install -e .
 ```
 
-3. Use the `pt` command from anywhere:
+3. Use the `ptk` command from anywhere:
 ```bash
-pt --help
-```
-
-#### Option 2: Traditional Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/producer-toolkit.git
-cd producer-toolkit
-```
-
-2. Run the installation script:
-```bash
-# On macOS/Linux
-python install.py
-
-# On Windows
-scripts\windows\install.bat
+ptk --help
 ```
 
 ### Basic Usage
 
-#### Using the `pt` command (if installed as package):
+#### Using the `ptk` command (if installed as package):
 ```bash
-# Extract stems (vocals, drums, bass, other)
-pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+# Extract stems with BPM and key analysis (default)
+ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
 
-# Download audio only
-pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
+# Download audio only (no BPM/key analysis)
+ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
 
 # Download video
-pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
+ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
 
-# Extract 4 stems
-pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -n 4
+# Extract 4 stems with musical analysis (default: Demucs)
+ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+
+# Extract 2 stems (vocals and accompaniment)
+ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -n 2
+
+# Use Spleeter engine (optional, requires separate installation)
+ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --engine spleeter
+
+# Disable BPM/key analysis for faster processing
+ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --no-analysis
+
+# Example output filenames:
+# song_title_125bpm_Am.wav (main audio when -a used)
+# vocals_125bpm_Am.wav (vocal stem)
+# drums_125bpm_Am.wav (drum stem)
 ```
 
 #### Using the traditional method:
@@ -83,38 +83,28 @@ python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
 python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
 ```
 
-Windows users can use the provided batch file:
-```
-scripts\windows\run_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
-```
+## Installation
 
-## Documentation
-
-Detailed documentation is available in the `docs` directory:
-
-- [Installation Guide](docs/INSTALLATION.md) - Detailed installation instructions for all platforms
-- [Usage Guide](docs/USAGE.md) - Comprehensive usage instructions and examples
+See the [INSTALL.md](INSTALL.md) file for detailed installation instructions.
 
 ## Project Structure
 
 ```
 .
-├── docs/                 # Documentation
 ├── producer_toolkit/     # Main Python package
 │   ├── __init__.py      # Package initialization
 │   ├── cli.py           # Command-line interface
 │   ├── downloader/      # YouTube downloading tools
 │   └── processor/       # Audio processing tools
+│       └── utils/       # Utility functions
 ├── main.py               # Legacy CLI entry point
-├── install.py            # Cross-platform installation script
 ├── setup.py              # Python package configuration
 ├── pyproject.toml        # Modern Python packaging
-├── models/               # Where stem separation models are stored
 ├── requirements.txt      # Python dependencies
+├── INSTALL.md            # Installation guide
 ├── scripts/              # Helper scripts
 │   └── windows/          # Windows-specific scripts
-├── tests/                # Test suite
-└── tools/                # Legacy tools directory (deprecated)
+└── tests/                # Test suite
 ```
 
 ## Development
@@ -122,14 +112,8 @@ Detailed documentation is available in the `docs` directory:
 ### Running Tests
 
 ```bash
-# Run offline tests
-python -m tests.run_tests --offline
-
-# Run all tests
-python -m tests.run_tests --all
-
-# Run local tests with YouTube download
-python -m tests.run_tests --local
+# Run all unit tests
+python -m tests.run_tests
 ```
 
 ### Package Development
@@ -142,9 +126,32 @@ pip install -e .
 pt --help
 ```
 
+## Musical Analysis
+
+The toolkit includes automatic BPM (beats per minute) and key detection using [librosa](https://librosa.org/), a powerful audio analysis library. This feature:
+
+- Analyzes audio files to detect tempo and musical key
+- Automatically includes this information in filenames
+- Works for both main downloads and individual stems (stems only)
+- Can be disabled with `--no-analysis` for faster processing
+
+### Example Output
+
+With musical analysis enabled (default):
+```
+song_title_128bmp_C.wav           # Main audio file
+vocals_128bpm_C.wav               # Vocal stem
+drums_128bpm_C.wav                # Drum stem  
+bass_128bpm_C.wav                 # Bass stem
+other_128bpm_C.wav                # Other instruments stem
+```
+
 ## First-Time Use
 
-On first run, Spleeter will download pretrained models (approximately 500MB). These will be stored in the `models` directory for future use.
+On first run:
+1. Demucs will download pretrained models (approximately 2GB for htdemucs model). These will be stored in your home directory under `~/.cache/torch/hub/checkpoints/` by default.
+2. Librosa will be used for audio analysis (included with the package).
+3. FFmpeg is required for Demucs to work properly - install via conda or system package manager.
 
 ## License
 

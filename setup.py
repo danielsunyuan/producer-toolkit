@@ -21,7 +21,7 @@ setup(
     version="1.0.0",
     author="Daniel",
     author_email="your-email@example.com",
-    description="A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter",
+    description="A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/producer-toolkit",
@@ -43,7 +43,7 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "pt=producer_toolkit.cli:main",
+            "ptk=producer_toolkit.cli:main",
         ],
     },
     include_package_data=True,
@@ -51,5 +51,5 @@ setup(
         "producer_toolkit": ["*.md", "docs/*"],
     },
     zip_safe=False,
-    keywords="audio, music, youtube, spleeter, stems, separation, download",
+    keywords="audio, music, youtube, demucs, stems, separation, download",
 )

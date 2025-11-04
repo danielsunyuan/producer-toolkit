@@ -3,6 +3,8 @@ import sys
 import shutil
 import logging
 from pathlib import Path
+from ..analyzer.audio_analyzer import analyze_audio, generate_filename_with_features
+from ..utils.loading import Spinner
 
 # Set model path before importing Spleeter
 # This ensures models will be downloaded to our custom directory
@@ -18,9 +20,9 @@ logging.getLogger('tensorflow').setLevel(logging.ERROR)
 # Now import Spleeter after environment variables are set
 from spleeter.separator import Separator
 
-def extract_stems(audio_path, output_dir, stem_number=2, models_dir=None):
+def extract_stems(audio_path, output_dir, stem_number=2, models_dir=None, analyze_features=True):
     """
-    Splits the audio file into stems using Spleeter.
+    Splits the audio file into stems using Spleeter with BPM and key analysis.
     
     Args:
         audio_path (str): Path to the input audio file (WAV format expected).
@@ -28,6 +30,7 @@ def extract_stems(audio_path, output_dir, stem_number=2, models_dir=None):
         stem_number (int): Number of stems (e.g., 2, 4, or 5). Default is 2 stems.
         models_dir (str, optional): Directory where Spleeter models should be stored.
                                    If None, defaults to 'models' in the project root.
+        analyze_features (bool): Whether to analyze and include BPM/key in stem filenames (default: True).
     
     Returns:
         str: The output directory where stems are saved.
@@ -39,14 +42,30 @@ def extract_stems(audio_path, output_dir, stem_number=2, models_dir=None):
     if models_dir is None:
         models_dir = os.environ.get('MODEL_PATH')
     
+    # Analyze audio features first if requested
+    bpm, key = None, None
+    analysis_spinner = None
+    if analyze_features:
+        try:
+            analysis_spinner = Spinner("🎵 Analyzing audio features")
+            analysis_spinner.start()
+            bpm, key = analyze_audio(audio_path)
+            analysis_spinner.stop(f"✅ Detected: {bpm} BPM, Key: {key}")
+        except Exception as e:
+            if analysis_spinner:
+                analysis_spinner.stop()
+            print(f"⚠️  Warning: Audio analysis failed ({str(e)}), proceeding without features")
+            analyze_features = False
+    
     # Initialize Spleeter with the specified number of stems
+    spinner = Spinner("🔧 Processing stems with Spleeter")
+    spinner.start()
+    
     separator = Separator(
         f'spleeter:{stem_number}stems',
         multiprocess=True,  # Set to True for faster processing if your system supports it
         stft_backend="tensorflow"
     )
-    
-    print(f"Processing stems... (this may take a moment)")
     
     # Create a temporary directory for initial output
     temp_output = os.path.join(output_dir, "_temp_spleeter")
@@ -54,6 +73,7 @@ def extract_stems(audio_path, output_dir, stem_number=2, models_dir=None):
     
     # Perform separation; Spleeter will create subdirectories inside temp_output
     separator.separate_to_file(audio_path, temp_output)
+    spinner.stop()
     
     # Get the filename from the audio path
     filename = os.path.splitext(os.path.basename(audio_path))[0]
@@ -63,14 +83,24 @@ def extract_stems(audio_path, output_dir, stem_number=2, models_dir=None):
     
     if os.path.exists(source_dir):
         for stem_file in os.listdir(source_dir):
-            # Move each stem file to the output directory
             src_path = os.path.join(source_dir, stem_file)
-            dst_path = os.path.join(output_dir, stem_file)
+            
+            # Generate enhanced filename with BPM and key if analysis was successful
+            if analyze_features and bpm is not None and key is not None:
+                enhanced_filename = generate_filename_with_features(stem_file, bpm, key)
+                dst_path = os.path.join(output_dir, enhanced_filename)
+            else:
+                dst_path = os.path.join(output_dir, stem_file)
+            
+            # Move each stem file to the output directory
             shutil.move(src_path, dst_path)
-            print(f"✓ Created {os.path.basename(dst_path)}")
+            print(f"  ✓ {os.path.basename(dst_path)}")
     
     # Clean up temp directory
     shutil.rmtree(temp_output, ignore_errors=True)
     
-    print(f"✅ Audio successfully split into {stem_number} stems")
+    if analyze_features and bpm is not None and key is not None:
+        print(f"✅ Successfully split into {stem_number} stems ({bpm} BPM, {key})")
+    else:
+        print(f"✅ Successfully split into {stem_number} stems")
     return output_dir

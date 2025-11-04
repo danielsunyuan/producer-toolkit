@@ -1,15 +1,15 @@
 Metadata-Version: 2.4
 Name: producer-toolkit
 Version: 1.0.0
-Summary: A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter
+Summary: A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs
 Home-page: https://github.com/yourusername/producer-toolkit
 Author: Daniel
-Author-email: Daniel <your-email@example.com>
+Author-email: Daniel <danielsunyuan@gmail.com>
 License: MIT
-Project-URL: Homepage, https://github.com/yourusername/producer-toolkit
-Project-URL: Repository, https://github.com/yourusername/producer-toolkit
-Project-URL: Issues, https://github.com/yourusername/producer-toolkit/issues
-Keywords: audio,music,youtube,spleeter,stems,separation,download
+Project-URL: Homepage, https://github.com/danielsunyuan/producer-toolkit
+Project-URL: Repository, https://github.com/danielsunyuan/producer-toolkit
+Project-URL: Issues, https://github.com/danielsunyuan/producer-toolkit/issues
+Keywords: audio,music,youtube,demucs,stems,separation,download
 Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Developers
 Classifier: Intended Audience :: End Users/Desktop
@@ -23,34 +23,62 @@ Classifier: Topic :: Multimedia :: Sound/Audio
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 Requires-Dist: yt-dlp>=2023.3.4
-Requires-Dist: spleeter==2.3.2
+Requires-Dist: demucs>=4.0.0
 Requires-Dist: ffmpeg-python==0.2.0
-Requires-Dist: librosa==0.8.1
+Requires-Dist: librosa>=0.10.0
 Requires-Dist: soundfile==0.12.1
 Requires-Dist: pydub==0.25.1
-Requires-Dist: norbert==0.2.1
-Requires-Dist: numpy==1.22.4
-Requires-Dist: scikit-learn==1.3.0
-Requires-Dist: tensorflow==2.13.0
+Requires-Dist: numpy>=1.22.4
+Requires-Dist: torch>=2.0.0
+Requires-Dist: torchaudio>=2.0.0
+Requires-Dist: torchcodec>=0.8.0
 Dynamic: author
 Dynamic: home-page
 Dynamic: requires-python
 
 # Producer Toolkit
 
-A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter.
+A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs (default) or Spleeter.
 
 ## Features
 
 - Download audio or video from YouTube links
 - Extract stems (vocals, drums, bass, other) from audio files
+- **NEW**: Automatic BPM and key detection using aubio
+- **NEW**: Enhanced file naming with musical features (e.g., `song_128bpm_Am.wav`)
+- **NEW**: Musical analysis for both main files and individual stems
 - Clean output format with organized file structure
 - Local model storage for faster processing
 - Cross-platform support (macOS, Linux, Windows)
+- Available as a Python package with global `pt` command
 
 ## Quick Start
 
 ### Installation
+
+#### Option 1: Install as Python Package (Recommended)
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/producer-toolkit.git
+cd producer-toolkit
+```
+
+2. Install the package:
+```bash
+# Install in development mode (recommended for development)
+pip install -e .
+
+# Or install globally (available system-wide)
+pip install -e .
+```
+
+3. Use the `pt` command from anywhere:
+```bash
+pt --help
+```
+
+#### Option 2: Traditional Installation
 
 1. Clone the repository:
 ```bash
@@ -69,6 +97,36 @@ scripts\windows\install.bat
 
 ### Basic Usage
 
+#### Using the `pt` command (if installed as package):
+```bash
+# Extract stems with BPM and key analysis (default)
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+
+# Download audio with BPM and key analysis
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
+
+# Download video
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
+
+# Extract 4 stems with musical analysis (default: Demucs)
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+
+# Extract 2 stems (vocals and accompaniment)
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -n 2
+
+# Use Spleeter engine (faster, lower quality)
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --engine spleeter
+
+# Disable BPM/key analysis for faster processing
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --no-analysis
+
+# Example output filenames:
+# song_title_125bpm_Am.wav (main audio)
+# vocals_125bpm_Am.wav (vocal stem)
+# drums_125bpm_Am.wav (drum stem)
+```
+
+#### Using the traditional method:
 ```bash
 # Extract stems (vocals, drums, bass, other)
 python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
@@ -97,20 +155,74 @@ Detailed documentation is available in the `docs` directory:
 ```
 .
 ├── docs/                 # Documentation
-├── main.py               # Main CLI entry point
+├── producer_toolkit/     # Main Python package
+│   ├── __init__.py      # Package initialization
+│   ├── cli.py           # Command-line interface
+│   ├── downloader/      # YouTube downloading tools
+│   └── processor/       # Audio processing tools
+├── main.py               # Legacy CLI entry point
 ├── install.py            # Cross-platform installation script
+├── setup.py              # Python package configuration
+├── pyproject.toml        # Modern Python packaging
 ├── models/               # Where stem separation models are stored
 ├── requirements.txt      # Python dependencies
 ├── scripts/              # Helper scripts
 │   └── windows/          # Windows-specific scripts
-└── tools/                # Core functionality
-    ├── downloader/       # YouTube downloading tools
-    └── processor/        # Audio processing tools
+├── tests/                # Test suite
+└── tools/                # Legacy tools directory (deprecated)
+```
+
+## Development
+
+### Running Tests
+
+```bash
+# Run offline tests
+python -m tests.run_tests --offline
+
+# Run all tests
+python -m tests.run_tests --all
+
+# Run local tests with YouTube download
+python -m tests.run_tests --local
+```
+
+### Package Development
+
+```bash
+# Install in development mode
+pip install -e .
+
+# Test the package
+pt --help
+```
+
+## Musical Analysis
+
+The toolkit now includes automatic BPM (beats per minute) and key detection using [aubio](https://aubio.org/), a powerful audio analysis library. This feature:
+
+- Analyzes audio files to detect tempo and musical key
+- Automatically includes this information in filenames
+- Works for both main downloads and individual stems
+- Can be disabled with `--no-analysis` for faster processing
+
+### Example Output
+
+With musical analysis enabled (default):
+```
+song_title_128bmp_C.wav           # Main audio file
+vocals_128bpm_C.wav               # Vocal stem
+drums_128bpm_C.wav                # Drum stem  
+bass_128bpm_C.wav                 # Bass stem
+other_128bpm_C.wav                # Other instruments stem
 ```
 
 ## First-Time Use
 
-On first run, Spleeter will download pretrained models (approximately 500MB). These will be stored in the `models` directory for future use.
+On first run:
+1. Demucs will download pretrained models (approximately 2GB for htdemucs model). These will be stored in your home directory under `~/.cache/torch/hub/checkpoints/` by default.
+2. Aubio will be initialized for audio analysis (requires system-level aubio installation on some platforms).
+3. FFmpeg is required for Demucs to work properly - install via conda or system package manager.
 
 ## License
 

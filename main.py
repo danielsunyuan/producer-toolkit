@@ -5,8 +5,8 @@ import tempfile
 import platform
 import shutil
 from pathlib import Path
-from tools.downloader.download import download_audio, download_video
-from tools.processor.spleeter_processor import extract_stems
+from producer_toolkit.downloader.download import download_audio, download_video
+from producer_toolkit.processor.demucs_processor import extract_stems
 
 def main():
     """
@@ -25,8 +25,8 @@ def main():
     parser.add_argument("-a", "--audio", action="store_true", help="Download Audio")
     parser.add_argument("-s", "--stems", action="store_true", help="Download Audio & Extract Stems")
     parser.add_argument("-o", "--output-dir", dest="output_dir", help="Specify output directory")
-    parser.add_argument("-n", "--num-stems", dest="num_stems", type=int, default=2, 
-                       choices=[2, 4, 5], help="Number of stems to extract (2, 4, or 5)")
+    parser.add_argument("-n", "--num-stems", dest="num_stems", type=int, default=4, 
+                       choices=[2, 4], help="Number of stems to extract (2 or 4, default: 4)")
     
     # Hidden testing arguments (not shown in help)
     parser.add_argument("--test", action="store_true", help=argparse.SUPPRESS, 
@@ -122,8 +122,8 @@ def main():
                 stems_output_dir = os.path.join(output_dir, f"{filename}_stems")
                 os.makedirs(stems_output_dir, exist_ok=True)
                 
-                # Extract stems using Spleeter with specified stem count
-                print("Processing audio with Spleeter...")
+                # Extract stems using Demucs with specified stem count
+                print("Processing audio with Demucs...")
                 extract_stems(
                     final_audio_path, 
                     stems_output_dir, 
@@ -158,8 +158,8 @@ def main():
             stems_output_dir = os.path.join(output_dir, f"{filename}_stems")
             os.makedirs(stems_output_dir, exist_ok=True)
             
-            # Extract stems using Spleeter with specified stem count
-            print("Processing audio with Spleeter...")
+            # Extract stems using Demucs with specified stem count
+            print("Processing audio with Demucs...")
             extract_stems(
                 final_audio_path, 
                 stems_output_dir, 
