@@ -122,11 +122,11 @@ def download_audio(url, output_path=None, analyze_features=True):
     
     # Get the actual title to build the correct return path
     if info_dict and 'title' in info_dict:
-            # Replace the template with the actual title
-            if '%(title)s' in temp_return_path:
-                temp_file_path = temp_return_path.replace('%(title)s', info_dict['title'])
-            else:
-                temp_file_path = temp_return_path
+        # Replace the template with the actual title
+        if '%(title)s' in temp_return_path:
+            temp_file_path = temp_return_path.replace('%(title)s', info_dict['title'])
+        else:
+            temp_file_path = temp_return_path
 
     # If we don't need to analyze features, return the temp file path as is
     if not analyze_features:

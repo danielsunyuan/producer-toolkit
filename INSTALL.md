@@ -78,3 +78,16 @@ pip install spleeter tensorflow
 rm -rf ~/.cache/torch/hub/checkpoints/
 ```
 
+### Aubio Build Issues (Optional)
+Aubio is optional - the toolkit will use librosa as a fallback if aubio is not available.
+
+If you want to try installing aubio:
+```bash
+# macOS (using Homebrew - recommended)
+brew install aubio
+
+# Or try pip (may fail on some systems)
+pip install aubio
+
+# If pip fails, that's okay - librosa will be used instead
+```
