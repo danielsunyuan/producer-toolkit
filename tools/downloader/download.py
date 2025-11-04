@@ -23,6 +23,7 @@ def download_video(url, output_path=None):
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',  # Highest quality video + audio
         'merge_output_format': 'mp4',  # Ensure MP4 output
         'outtmpl': output_path,  # Set output file path
+        'noplaylist': True,  # Only download the video, not the entire playlist
         # Dynamically find ffmpeg path
         'ffmpeg_location': shutil.which('ffmpeg'),
         'postprocessor_args': [
@@ -69,6 +70,7 @@ def download_audio(url, output_path=None):
     ydl_opts = {
         'format': 'bestaudio[ext=m4a]/bestaudio/best',  # Best available audio
         'outtmpl': output_path,  # Output template
+        'noplaylist': True,  # Only download the video, not the entire playlist
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',  # Convert to WAV
             'preferredcodec': 'wav',
