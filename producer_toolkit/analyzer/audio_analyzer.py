@@ -102,8 +102,13 @@ class AudioAnalyzer:
             # Get onset strength
             onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=self.hop_length)
             
-            # Estimate tempo from onset strength
-            tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr, hop_length=self.hop_length)
+            # Estimate tempo from onset strength (use new API in librosa >= 0.10.0)
+            try:
+                # New API (librosa >= 0.10.0)
+                tempo = librosa.feature.rhythm.tempo(onset_envelope=onset_env, sr=sr, hop_length=self.hop_length)
+            except AttributeError:
+                # Fallback for older librosa versions
+                tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr, hop_length=self.hop_length)
             
             if tempo > 0 and len(tempo) > 0:
                 return float(tempo[0])
