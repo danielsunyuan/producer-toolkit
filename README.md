@@ -1,6 +1,6 @@
 # Producer Toolkit
 
-A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Spleeter.
+A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs.
 
 ## Features
 
@@ -70,8 +70,11 @@ pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
 # Download video
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
 
-# Extract 4 stems with musical analysis
-pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -n 4
+# Extract 4 stems with musical analysis (default)
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+
+# Extract 2 stems (vocals and accompaniment)
+pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -n 2
 
 # Disable BPM/key analysis for faster processing
 pt "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --no-analysis
@@ -153,8 +156,6 @@ pip install -e .
 pt --help
 ```
 
-## First-Time Use
-
 ## Musical Analysis
 
 The toolkit now includes automatic BPM (beats per minute) and key detection using [aubio](https://aubio.org/), a powerful audio analysis library. This feature:
@@ -178,8 +179,9 @@ other_128bpm_C.wav                # Other instruments stem
 ## First-Time Use
 
 On first run:
-1. Spleeter will download pretrained models (approximately 500MB). These will be stored in the `models` directory for future use.
+1. Demucs will download pretrained models (approximately 2GB for htdemucs model). These will be stored in your home directory under `~/.cache/torch/hub/checkpoints/` by default.
 2. Aubio will be initialized for audio analysis (requires system-level aubio installation on some platforms).
+3. FFmpeg is required for Demucs to work properly - install via conda or system package manager.
 
 ## License
 
