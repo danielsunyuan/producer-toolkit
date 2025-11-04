@@ -38,7 +38,7 @@ def main():
     parser.add_argument("-s", "--stems", action="store_true", help="Download Audio & Extract Stems")
     parser.add_argument("-o", "--output-dir", dest="output_dir", help="Specify output directory")
     parser.add_argument("-n", "--num-stems", dest="num_stems", type=int, default=4, 
-                       choices=[2, 4], help="Number of stems to extract (2 or 4, default: 4)")
+                       help="Number of stems to extract (2, 4, or 5 for Spleeter; 2 or 4 for Demucs)")
     parser.add_argument("--no-analysis", action="store_true", 
                        help="Disable BPM and key analysis (faster but no enhanced filenames)")
     parser.add_argument("--engine", choices=["demucs", "spleeter"], default="demucs",
@@ -50,6 +50,12 @@ def main():
     parser.add_argument("--test-file", help=argparse.SUPPRESS)
     
     options = parser.parse_args()
+    
+    # Validate stem count based on engine
+    if options.engine == "demucs" and options.num_stems not in [2, 4]:
+        parser.error(f"Demucs only supports 2 or 4 stems, got {options.num_stems}")
+    elif options.engine == "spleeter" and options.num_stems not in [2, 4, 5]:
+        parser.error(f"Spleeter supports 2, 4, or 5 stems, got {options.num_stems}")
     
     # Determine the output directory (default: Downloads folder)
     if options.output_dir:
