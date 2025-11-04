@@ -1,9 +1,9 @@
 """
 Processor module for Producer Toolkit.
 
-Provides functionality for audio processing and stem separation using Spleeter.
+Provides functionality for audio processing and stem separation using Demucs.
 """
 
-from .spleeter_processor import extract_stems
+from .demucs_processor import extract_stems
 
 __all__ = ["extract_stems"]
