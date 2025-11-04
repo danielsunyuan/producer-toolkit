@@ -67,29 +67,17 @@ pt "YOUTUBE_URL" -s
 conda install -c conda-forge ffmpeg -y
 ```
 
-### Aubio (REQUIRED for BPM/Key Detection)
-Aubio is required for accurate BPM and key detection. The toolkit does not use fallbacks.
+### Librosa (REQUIRED for BPM/Key Detection)
+Librosa is used for accurate BPM and key detection. It's actively maintained and works seamlessly with modern NumPy versions.
 
-**Installation Order:**
-1. Install numpy first (required for aubio compilation):
-   ```bash
-   pip install numpy
-   ```
+**Installation:**
+Librosa is automatically installed when you run `pip install -e .`. No additional setup is required.
 
-2. Then install aubio:
-   ```bash
-   pip install aubio
-   ```
-
-**If pip install fails:**
-- **macOS (Recommended)**: Use Homebrew which includes Python bindings:
-  ```bash
-  brew install aubio
-  ```
-- **Linux**: Use system package manager:
-  ```bash
-  sudo apt-get install aubio-tools python3-aubio
-  ```
+**Features:**
+- ✅ Actively maintained and regularly updated
+- ✅ Works with modern NumPy versions (no compilation issues)
+- ✅ Good accuracy for BPM and key detection
+- ✅ Excellent documentation and community support
 
 ## Troubleshooting
 
@@ -109,23 +97,15 @@ pip install spleeter tensorflow
 rm -rf ~/.cache/torch/hub/checkpoints/
 ```
 
-### Aubio Build Issues
-If `pip install aubio` fails due to compilation errors:
+### Librosa Installation Issues
+If you encounter issues with librosa:
 
-1. **macOS**: Use Homebrew (recommended):
+1. **Ensure all dependencies are installed**:
    ```bash
-   brew install aubio
-   ```
-   The Homebrew version includes Python bindings and avoids compilation issues.
-
-2. **Ensure numpy is installed first**:
-   ```bash
-   pip install numpy
-   pip install aubio
+   pip install numpy scipy scikit-learn numba
+   pip install librosa
    ```
 
-3. **Check system dependencies**:
-   - macOS: Ensure Xcode Command Line Tools are installed
-   - Linux: Install build essentials: `sudo apt-get install build-essential`
+2. **On macOS with Apple Silicon**, librosa should work out of the box with conda/pip installations.
 
-**Note**: Aubio is required - there are no fallbacks. The toolkit will fail to start if aubio is not available.
+3. **Performance Note**: Librosa is slightly slower than aubio but provides excellent accuracy and modern compatibility.

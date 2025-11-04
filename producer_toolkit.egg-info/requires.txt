@@ -4,8 +4,8 @@ ffmpeg-python==0.2.0
 librosa==0.8.1
 soundfile==0.12.1
 pydub==0.25.1
-aubio>=0.4.9
 numpy>=1.22.4
+aubio>=0.4.9
 torch>=2.0.0
 torchaudio>=2.0.0
 torchcodec>=0.8.0

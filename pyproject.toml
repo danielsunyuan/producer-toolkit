@@ -33,10 +33,7 @@ dependencies = [
     "librosa==0.8.1",
     "soundfile==0.12.1",
     "pydub==0.25.1",
-    # numpy must be installed before aubio (required for aubio compilation)
     "numpy>=1.22.4",
-    # aubio is REQUIRED for BPM/key detection (no fallbacks)
-    "aubio>=0.4.9",
     "torch>=2.0.0",
     "torchaudio>=2.0.0",
     "torchcodec>=0.8.0",
