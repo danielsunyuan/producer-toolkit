@@ -60,6 +60,37 @@ conda activate producer-toolkit
 pt "YOUTUBE_URL" -s
 ```
 
+## Required Dependencies
+
+### FFmpeg (REQUIRED)
+```bash
+conda install -c conda-forge ffmpeg -y
+```
+
+### Aubio (REQUIRED for BPM/Key Detection)
+Aubio is required for accurate BPM and key detection. The toolkit does not use fallbacks.
+
+**Installation Order:**
+1. Install numpy first (required for aubio compilation):
+   ```bash
+   pip install numpy
+   ```
+
+2. Then install aubio:
+   ```bash
+   pip install aubio
+   ```
+
+**If pip install fails:**
+- **macOS (Recommended)**: Use Homebrew which includes Python bindings:
+  ```bash
+  brew install aubio
+  ```
+- **Linux**: Use system package manager:
+  ```bash
+  sudo apt-get install aubio-tools python3-aubio
+  ```
+
 ## Troubleshooting
 
 ### FFmpeg Missing
@@ -78,16 +109,23 @@ pip install spleeter tensorflow
 rm -rf ~/.cache/torch/hub/checkpoints/
 ```
 
-### Aubio Build Issues (Optional)
-Aubio is optional - the toolkit will use librosa as a fallback if aubio is not available.
+### Aubio Build Issues
+If `pip install aubio` fails due to compilation errors:
 
-If you want to try installing aubio:
-```bash
-# macOS (using Homebrew - recommended)
-brew install aubio
+1. **macOS**: Use Homebrew (recommended):
+   ```bash
+   brew install aubio
+   ```
+   The Homebrew version includes Python bindings and avoids compilation issues.
 
-# Or try pip (may fail on some systems)
-pip install aubio
+2. **Ensure numpy is installed first**:
+   ```bash
+   pip install numpy
+   pip install aubio
+   ```
 
-# If pip fails, that's okay - librosa will be used instead
-```
+3. **Check system dependencies**:
+   - macOS: Ensure Xcode Command Line Tools are installed
+   - Linux: Install build essentials: `sudo apt-get install build-essential`
+
+**Note**: Aubio is required - there are no fallbacks. The toolkit will fail to start if aubio is not available.

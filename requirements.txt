@@ -7,12 +7,13 @@ ffmpeg-python==0.2.0
 librosa==0.8.1
 soundfile==0.12.1
 pydub==0.25.1
-# aubio is optional - falls back to librosa if not available
-# Install system aubio via: brew install aubio (macOS) or apt-get install aubio-tools (Linux)
-# Or try: pip install aubio (may fail on some systems)
 
 # Machine learning dependencies (for Demucs/PyTorch)
+# numpy must be installed before aubio (required for aubio compilation)
 numpy>=1.22.4
+
+# Audio analysis (REQUIRED - no fallbacks)
+aubio>=0.4.9
 torch>=2.0.0
 torchaudio>=2.0.0
 torchcodec>=0.8.0
