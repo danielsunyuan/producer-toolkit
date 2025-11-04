@@ -28,7 +28,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        python -m unittest discover tests/ -v -k "test_audio_analyzer"
+        python -m unittest discover tests/ -p "test_audio_analyzer.py" -v
 
     - name: Verify CLI installation
       run: |
