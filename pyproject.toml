@@ -40,7 +40,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pt = "producer_toolkit.cli:main"
+ptk = "producer_toolkit.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/danielsunyuan/producer-toolkit"

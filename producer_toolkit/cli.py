@@ -102,12 +102,11 @@ def main():
                 print(f"Error during test: {e}")
                 return 1
                 
-        # Standard mode - download audio
+        # Standard mode - download audio (no BPM/key analysis for audio-only downloads)
         spinner = Spinner("📥 Downloading audio")
         spinner.start()
         try:
-            analyze_features = not options.no_analysis
-            audio_file = download_audio(options.link, output_dir, analyze_features=analyze_features)
+            audio_file = download_audio(options.link, output_dir, analyze_features=False)
             spinner.stop()
             if audio_file and os.path.exists(audio_file):
                 print(f"✅ Audio saved at: {audio_file}")
@@ -251,12 +250,11 @@ def main():
                 print(f"Error during test: {str(e)}")
                 return 1
         
-        # Default to audio download if no option is selected
+        # Default to audio download if no option is selected (no BPM/key analysis for audio-only downloads)
         spinner = Spinner("📥 Downloading audio")
         spinner.start()
         try:
-            analyze_features = not options.no_analysis
-            audio_file = download_audio(options.link, output_dir, analyze_features=analyze_features)
+            audio_file = download_audio(options.link, output_dir, analyze_features=False)
             spinner.stop()
             if audio_file and os.path.exists(audio_file):
                 print(f"✅ Audio saved at: {audio_file}")

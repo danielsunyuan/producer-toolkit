@@ -5,8 +5,8 @@ import tempfile
 import platform
 import shutil
 from pathlib import Path
-from tools.downloader.download import download_audio, download_video
-from tools.processor.demucs_processor import extract_stems
+from producer_toolkit.downloader.download import download_audio, download_video
+from producer_toolkit.processor.demucs_processor import extract_stems
 
 def main():
     """

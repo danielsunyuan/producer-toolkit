@@ -43,7 +43,7 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "pt=producer_toolkit.cli:main",
+            "ptk=producer_toolkit.cli:main",
         ],
     },
     include_package_data=True,
