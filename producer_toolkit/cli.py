@@ -17,8 +17,19 @@ from pathlib import Path
 # Import from the package
 from .downloader.download import download_audio, download_video
 from .processor.demucs_processor import extract_stems as extract_stems_demucs
-from .processor.spleeter_processor import extract_stems as extract_stems_spleeter
 from .utils.loading import Spinner
+
+# Lazy import for Spleeter (optional dependency)
+def get_spleeter_processor():
+    """Lazy import for Spleeter to avoid errors if not installed."""
+    try:
+        from .processor.spleeter_processor import extract_stems as extract_stems_spleeter
+        return extract_stems_spleeter
+    except ImportError:
+        raise ImportError(
+            "Spleeter is not installed. Install it with: "
+            "pip install spleeter tensorflow"
+        )
 
 def main():
     """
@@ -163,7 +174,10 @@ def main():
                 engine_name = options.engine.capitalize()
                 print(f"🔧 Using {engine_name} engine")
                 analyze_features = not options.no_analysis
-                extract_stems_func = extract_stems_demucs if options.engine == "demucs" else extract_stems_spleeter
+                if options.engine == "demucs":
+                    extract_stems_func = extract_stems_demucs
+                else:
+                    extract_stems_func = get_spleeter_processor()
                 extract_stems_func(
                     final_audio_path, 
                     stems_output_dir, 
@@ -203,7 +217,10 @@ def main():
             
             # Stage 2: Extract stems
             analyze_features = not options.no_analysis
-            extract_stems_func = extract_stems_demucs if options.engine == "demucs" else extract_stems_spleeter
+            if options.engine == "demucs":
+                extract_stems_func = extract_stems_demucs
+            else:
+                extract_stems_func = get_spleeter_processor()
             extract_stems_func(
                 final_audio_path, 
                 stems_output_dir, 
