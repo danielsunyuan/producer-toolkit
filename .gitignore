@@ -180,3 +180,7 @@ cython_debug/
 models/
 tests/output/
 output/
+# Local runtime caches and verification outputs
+.runtime/
+verification-output/
+sample-downloads/

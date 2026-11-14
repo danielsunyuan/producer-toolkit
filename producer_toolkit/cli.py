@@ -1,273 +1,85 @@
-#!/usr/bin/env python3
-"""
-Producer Toolkit CLI - Command-line interface for music production tools.
-
-This module provides the main CLI functionality for downloading audio/video
-from YouTube and extracting stems using Demucs.
-"""
-
-import os
-import sys
+"""Canonical CLI, also used by the compatibility u entry point."""
 import argparse
-import tempfile
-import platform
+import importlib.metadata
+import importlib.util
+import json
+import os
 import shutil
+import sys
 from pathlib import Path
+from urllib.parse import urlparse
+from . import __version__
 
-# Import from the package
-from .downloader.download import download_audio, download_video
-from .processor.demucs_processor import extract_stems as extract_stems_demucs
-from .utils.loading import Spinner
+def doctor():
+    print(f"PTK {__version__}\nPython: {sys.executable}\nSource: {Path(__file__).resolve().parent}")
+    print(f"FFmpeg: {shutil.which('ffmpeg') or 'MISSING (brew install ffmpeg)'}")
+    for name in ("yt-dlp", "yt-dlp-ejs", "demucs", "torch", "torchaudio", "librosa", "soundfile"):
+        try:
+            version = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            version = "MISSING"
+        print(f"{name}: {version}")
+    print(f"YouTube JS runtime: {shutil.which('deno') or shutil.which('node') or 'MISSING (install Deno or Node 22+)'}")
+    torch_home = Path(os.environ.get("TORCH_HOME", Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "torch"))
+    checkpoint = torch_home / "hub" / "checkpoints" / "955717e8-8726e21a.th"
+    print(f"htdemucs checkpoint: {checkpoint} ({'cached' if checkpoint.is_file() else 'not cached; downloads on first separation'})")
+    print("Diagnostics do not test live downloads or model inference.")
+    return 0 if shutil.which("ffmpeg") and all(importlib.util.find_spec(n) for n in ("yt_dlp", "demucs", "soundfile")) else 1
 
-# Lazy import for Spleeter (optional dependency)
-def get_spleeter_processor():
-    """Lazy import for Spleeter to avoid errors if not installed."""
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv == ["doctor"]:
+        return doctor()
+    parser = argparse.ArgumentParser(prog="ptk", description="Download audio and prepare aligned stems for music production.")
+    parser.add_argument("source", help="Video URL or local audio file")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("-a", "--audio", action="store_true", help="Download WAV audio (default)")
+    modes.add_argument("-v", "--video", action="store_true", help="Download MP4 video")
+    modes.add_argument("-s", "--stems", action="store_true", help="Extract stems from a URL or local audio")
+    modes.add_argument("-acca", "--accapella", action="store_true", help="Extract vocals and accompaniment")
+    modes.add_argument("-inst", "--instrumental", action="store_true", help="Extract accompaniment and vocals")
+    parser.add_argument("-o", "--output-dir", type=Path, default=Path.home() / "Downloads")
+    parser.add_argument("-n", "--num-stems", type=int, choices=(2, 4), default=4)
+    parser.add_argument("--no-analysis", action="store_true", help="Skip estimated BPM/key metadata")
+    parser.add_argument("--analyze", action="store_true", help="Analyze local audio without separation")
+    parser.add_argument("--engine", choices=("demucs",), default="demucs")
+    parser.add_argument("--device", choices=("cpu", "mps", "cuda"), default="cpu")
+    parser.add_argument("--version", action="version", version=f"PTK {__version__}")
+    options = parser.parse_args(argv)
     try:
-        from .processor.spleeter_processor import extract_stems as extract_stems_spleeter
-        return extract_stems_spleeter
-    except ImportError:
-        raise ImportError(
-            "Spleeter is not installed. Install it with: "
-            "pip install spleeter tensorflow"
-        )
-
-def main():
-    """
-    Main function to handle downloading and processing of video/audio.
-    """
-    parser = argparse.ArgumentParser(
-        description="Download and process audio from a link.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    
-    # Required argument: the YouTube link
-    parser.add_argument("link", help="Link to download video/audio from")
-    
-    # Optional arguments for different operations
-    parser.add_argument("-v", "--video", action="store_true", help="Download Video")
-    parser.add_argument("-a", "--audio", action="store_true", help="Download Audio")
-    parser.add_argument("-s", "--stems", action="store_true", help="Download Audio & Extract Stems")
-    parser.add_argument("-o", "--output-dir", dest="output_dir", help="Specify output directory")
-    parser.add_argument("-n", "--num-stems", dest="num_stems", type=int, default=4, 
-                       help="Number of stems to extract (2, 4, or 5 for Spleeter; 2 or 4 for Demucs)")
-    parser.add_argument("--no-analysis", action="store_true", 
-                       help="Disable BPM and key analysis (faster but no enhanced filenames)")
-    parser.add_argument("--engine", choices=["demucs", "spleeter"], default="demucs",
-                       help="Stem separation engine to use (default: demucs)")
-    
-    # Hidden testing arguments (not shown in help)
-    parser.add_argument("--test", action="store_true", help=argparse.SUPPRESS, 
-                        default=False)
-    parser.add_argument("--test-file", help=argparse.SUPPRESS)
-    
-    options = parser.parse_args()
-    
-    # Validate stem count based on engine
-    if options.engine == "demucs" and options.num_stems not in [2, 4]:
-        parser.error(f"Demucs only supports 2 or 4 stems, got {options.num_stems}")
-    elif options.engine == "spleeter" and options.num_stems not in [2, 4, 5]:
-        parser.error(f"Spleeter supports 2, 4, or 5 stems, got {options.num_stems}")
-    
-    # Determine the output directory (default: Downloads folder)
-    if options.output_dir:
-        output_dir = options.output_dir
-    else:
-        # Platform-specific Downloads folder
-        if platform.system() == "Windows":
-            # On Windows, use the user's Downloads folder
-            output_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-            if not os.path.exists(output_dir):
-                # Fallback to Documents folder if Downloads doesn't exist
-                output_dir = os.path.join(os.path.expanduser("~"), "Documents")
+        is_url = urlparse(options.source).scheme in ("http", "https")
+        local = None if is_url else Path(options.source).expanduser().resolve(strict=True)
+        if options.analyze:
+            if is_url or options.video or options.stems or options.accapella or options.instrumental:
+                parser.error("--analyze takes a local audio file without a separation flag")
+            from .analyzer.audio_analyzer import analyze_audio
+            bpm, key = analyze_audio(str(local))
+            print(json.dumps({"status": "estimated" if bpm is not None and key is not None else "unknown", "bpm": bpm, "key": key}, indent=2))
+            return 0
+        output = options.output_dir.expanduser().resolve()
+        output.mkdir(parents=True, exist_ok=True)
+        if options.stems or options.accapella or options.instrumental:
+            from .processor.demucs_processor import extract_stems
+            if local is None:
+                from .downloader.download import download_audio
+                print("Downloading source audio…", flush=True)
+                local = Path(download_audio(options.source, output, analyze_features=False))
+            stem_output = output / (local.stem + "_stems")
+            print(f"Separating stems using {options.device}…", flush=True)
+            extract_stems(str(local), str(stem_output),
+                          stem_number=2 if options.accapella or options.instrumental else options.num_stems,
+                          analyze_features=not options.no_analysis, device=options.device)
+            print(f"Stems ready: {stem_output}")
+        elif is_url:
+            from .downloader.download import download_audio, download_video
+            result = download_video(options.source, output) if options.video else download_audio(options.source, output, analyze_features=False)
+            print(f"Saved: {result}")
         else:
-            # macOS and Linux
-            output_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-    
-    if options.audio:
-        # Test mode with audio download
-        if options.test and options.test_file:
-            try:
-                print(f"Test mode: Using provided file for audio download test")
-                test_file = options.test_file
-                audio_filename = os.path.basename(test_file)
-                if not audio_filename.endswith('.wav'):
-                    audio_filename = f"{os.path.splitext(audio_filename)[0]}.wav"
-                output_file = os.path.join(output_dir, audio_filename)
-                
-                # Copy the test file instead of downloading
-                shutil.copy(test_file, output_file)
-                print(f"Test audio saved at: {output_file}")
-                return 0
-            except Exception as e:
-                print(f"Error during test: {e}")
-                return 1
-                
-        # Standard mode - download audio (no BPM/key analysis for audio-only downloads)
-        spinner = Spinner("📥 Downloading audio")
-        spinner.start()
-        try:
-            audio_file = download_audio(options.link, output_dir, analyze_features=False)
-            spinner.stop()
-            if audio_file and os.path.exists(audio_file):
-                print(f"✅ Audio saved at: {audio_file}")
-            else:
-                print("❌ Audio download failed.")
-                return 1
-        except Exception as e:
-            spinner.stop()
-            print(f"❌ Error: {str(e)}")
-            return 1
-    
-    elif options.video:
-        # Test mode with video download
-        if options.test and options.test_file:
-            try:
-                print(f"Test mode: Using provided file for video download test")
-                test_file = options.test_file
-                video_filename = os.path.basename(test_file)
-                if not video_filename.endswith('.mp4'):
-                    video_filename = f"{os.path.splitext(video_filename)[0]}.mp4"
-                output_file = os.path.join(output_dir, video_filename)
-                
-                # Copy the test file instead of downloading
-                shutil.copy(test_file, output_file)
-                print(f"Test video saved at: {output_file}")
-                return 0
-            except Exception as e:
-                print(f"Error during test: {str(e)}")
-                return 1
-        
-        # Standard mode - download video
-        spinner = Spinner("📥 Downloading video")
-        spinner.start()
-        try:
-            video_file = download_video(options.link, output_dir)
-            spinner.stop()
-            if video_file and os.path.exists(video_file):
-                print(f"✅ Video saved at: {video_file}")
-            else:
-                print("❌ Video download failed.")
-                return 1
-        except Exception as e:
-            spinner.stop()
-            print(f"❌ Error: {str(e)}")
-            return 1
-    
-    elif options.stems:
-        # Test mode uses a provided test file instead of downloading
-        if options.test and options.test_file:
-            try:
-                print(f"Test mode: Using provided audio file for stem separation: {options.test_file}")
-                final_audio_path = options.test_file
-                
-                # Ensure the file exists and is not empty
-                if not os.path.exists(final_audio_path) or os.path.getsize(final_audio_path) == 0:
-                    raise ValueError("Test file is missing or empty.")
-                
-                # Get the filename without extension to use as output directory name
-                filename = os.path.splitext(os.path.basename(final_audio_path))[0]
-                stems_output_dir = os.path.join(output_dir, f"{filename}_stems")
-                os.makedirs(stems_output_dir, exist_ok=True)
-                
-                # Extract stems with specified engine
-                engine_name = options.engine.capitalize()
-                print(f"🔧 Using {engine_name} engine")
-                analyze_features = not options.no_analysis
-                if options.engine == "demucs":
-                    extract_stems_func = extract_stems_demucs
-                else:
-                    extract_stems_func = get_spleeter_processor()
-                extract_stems_func(
-                    final_audio_path, 
-                    stems_output_dir, 
-                    stem_number=options.num_stems,
-                    analyze_features=analyze_features
-                )
-                # File is provided externally, no cleanup needed
-                print("Test completed successfully.")
-                return 0
-            except Exception as e:
-                print(f"Error during test processing: {str(e)}")
-                return 1
-        
-        # Standard mode - download and process
-        engine_name = options.engine.capitalize()
-        print(f"🎵 Starting stem separation pipeline with {engine_name}")
-        
-        # Use a well-defined temp directory for download only
-        temp_audio_dir = tempfile.gettempdir()  
-        final_audio_path = None
-        
-        try:
-            # Stage 1: Download audio
-            spinner = Spinner("📥 Downloading audio from YouTube")
-            spinner.start()
-            final_audio_path = download_audio(options.link, temp_audio_dir, analyze_features=False)
-            spinner.stop()
-            
-            # Ensure the file exists and is not empty
-            if not final_audio_path or not os.path.exists(final_audio_path) or os.path.getsize(final_audio_path) == 0:
-                raise ValueError("Download failed or file is empty.")
-            
-            # Get the filename without extension to use as output directory name
-            filename = os.path.splitext(os.path.basename(final_audio_path))[0]
-            stems_output_dir = os.path.join(output_dir, f"{filename}_stems")
-            os.makedirs(stems_output_dir, exist_ok=True)
-            
-            # Stage 2: Extract stems
-            analyze_features = not options.no_analysis
-            if options.engine == "demucs":
-                extract_stems_func = extract_stems_demucs
-            else:
-                extract_stems_func = get_spleeter_processor()
-            extract_stems_func(
-                final_audio_path, 
-                stems_output_dir, 
-                stem_number=options.num_stems,
-                analyze_features=analyze_features
-            )
-        except Exception as e:
-            print(f"❌ Error during processing: {str(e)}")
-            return 1
-        finally:
-            # Cleanup the temporary audio file
-            if final_audio_path and os.path.exists(final_audio_path):
-                os.remove(final_audio_path)
-    else:
-        # Test mode with audio download
-        if options.test and options.test_file:
-            try:
-                print(f"Test mode: Using provided audio file for audio download test")
-                test_file = options.test_file
-                audio_filename = os.path.basename(test_file)
-                output_file = os.path.join(output_dir, audio_filename)
-                
-                # Copy the test file instead of downloading
-                shutil.copy(test_file, output_file)
-                print(f"Test audio saved at: {output_file}")
-                return 0
-            except Exception as e:
-                print(f"Error during test: {str(e)}")
-                return 1
-        
-        # Default to audio download if no option is selected (no BPM/key analysis for audio-only downloads)
-        spinner = Spinner("📥 Downloading audio")
-        spinner.start()
-        try:
-            audio_file = download_audio(options.link, output_dir, analyze_features=False)
-            spinner.stop()
-            if audio_file and os.path.exists(audio_file):
-                print(f"✅ Audio saved at: {audio_file}")
-            else:
-                print("❌ Audio download failed.")
-                return 1
-        except Exception as e:
-            spinner.stop()
-            print(f"❌ Error: {str(e)}")
-            return 1
-    
-    # If we reached here, everything worked
-    return 0
+            parser.error("For local audio use -s (stems) or --analyze; the source is never modified.")
+        return 0
+    except (Exception, KeyboardInterrupt) as error:
+        print(f"PTK: {error}", file=sys.stderr)
+        return 130 if isinstance(error, KeyboardInterrupt) else 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

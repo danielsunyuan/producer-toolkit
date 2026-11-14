@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "producer-toolkit"
-version = "1.0.0"
+version = "1.1.1"
 description = "A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs"
 authors = [
     {name = "Daniel", email = "danielsunyuan@gmail.com"},
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers", 
@@ -19,15 +19,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Multimedia :: Sound/Audio",
 ]
 keywords = ["audio", "music", "youtube", "demucs", "stems", "separation", "download"]
 
 dependencies = [
-    "yt-dlp>=2023.3.4",
+    "yt-dlp[default]>=2026.10.26",
     "demucs>=4.0.0",
     "ffmpeg-python==0.2.0",
     "librosa>=0.10.0",
@@ -41,6 +39,8 @@ dependencies = [
 
 [project.scripts]
 ptk = "producer_toolkit.cli:main"
+u = "producer_toolkit.cli:main"
+pt = "producer_toolkit.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/danielsunyuan/producer-toolkit"

@@ -1,5 +1,5 @@
 # Core dependencies for downloading and processing
-yt-dlp>=2023.3.4
+yt-dlp[default]>=2026.10.26
 demucs>=4.0.0
 ffmpeg-python==0.2.0
 

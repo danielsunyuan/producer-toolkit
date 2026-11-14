@@ -1,0 +1,15 @@
+#!/bin/sh
+# Resolve this checkout independently of the terminal's current directory.
+PTK_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+if [ -n "${PTK_PYTHON:-}" ]; then
+    PTK_RUNTIME=$PTK_PYTHON
+elif [ -x "$PTK_ROOT/.venv/bin/python" ]; then
+    PTK_RUNTIME="$PTK_ROOT/.venv/bin/python"
+else
+    PTK_RUNTIME=python3
+fi
+mkdir -p "$PTK_ROOT/.runtime/numba" "$PTK_ROOT/.runtime/matplotlib"
+export PTK_CACHE_DIR="$PTK_ROOT/.runtime/yt-dlp"
+export NUMBA_CACHE_DIR="$PTK_ROOT/.runtime/numba"
+export MPLCONFIGDIR="$PTK_ROOT/.runtime/matplotlib"
+PYTHONPATH="$PTK_ROOT${PYTHONPATH:+:$PYTHONPATH}" exec "$PTK_RUNTIME" -m producer_toolkit "$@"

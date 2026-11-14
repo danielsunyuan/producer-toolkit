@@ -4,7 +4,7 @@ Audio analyzer module for BPM and key detection using librosa.
 
 import os
 import logging
-from typing import Tuple
+from typing import Tuple, Optional
 import numpy as np
 import librosa
 
@@ -29,7 +29,7 @@ class AudioAnalyzer:
         self.sample_rate = sample_rate
         self.hop_length = hop_length
     
-    def detect_bpm(self, audio_file: str) -> float:
+    def detect_bpm(self, audio_file: str) -> Optional[float]:
         """
         Detect BPM (tempo) from an audio file.
         
@@ -37,19 +37,19 @@ class AudioAnalyzer:
             audio_file: Path to the audio file
             
         Returns:
-            Detected BPM value, or 120.0 as fallback
+            Detected BPM value, or None if detection fails
         """
         if not os.path.exists(audio_file):
             logger.error(f"Audio file not found: {audio_file}")
-            return 120.0
+            return None
         
         try:
             return self._detect_bpm_librosa(audio_file)
         except Exception as e:
             logger.error(f"Error detecting BPM: {e}")
-            return 120.0
+            return None
     
-    def detect_key(self, audio_file: str) -> str:
+    def detect_key(self, audio_file: str) -> Optional[str]:
         """
         Detect musical key from an audio file.
         
@@ -57,19 +57,19 @@ class AudioAnalyzer:
             audio_file: Path to the audio file
             
         Returns:
-            Detected key (e.g., "Am", "C", "F#"), or "C" as fallback
+            Detected key (e.g., "Am", "C", "F#"), or None if detection fails
         """
         if not os.path.exists(audio_file):
             logger.error(f"Audio file not found: {audio_file}")
-            return "C"
+            return None
         
         try:
             return self._detect_key_librosa(audio_file)
         except Exception as e:
             logger.error(f"Error detecting key: {e}")
-            return "C"
+            return None
     
-    def analyze(self, audio_file: str) -> Tuple[float, str]:
+    def analyze(self, audio_file: str) -> Tuple[Optional[float], Optional[str]]:
         """
         Analyze an audio file for both BPM and key.
         
@@ -83,10 +83,12 @@ class AudioAnalyzer:
         key = self.detect_key(audio_file)
         return bpm, key
     
-    def _detect_bpm_librosa(self, audio_file: str) -> float:
+    def _detect_bpm_librosa(self, audio_file: str) -> Optional[float]:
         """Detect BPM using librosa."""
         # Load audio file
         y, sr = librosa.load(audio_file, sr=self.sample_rate)
+        if y.size == 0 or not np.all(np.isfinite(y)) or np.max(np.abs(y)) < 1e-8:
+            return None
         
         # Use librosa's tempo detection - this is more robust than beat tracking
         # Try tempo estimation first (more accurate for overall tempo)
@@ -95,7 +97,7 @@ class AudioAnalyzer:
             if tempo > 0:
                 # Handle both scalar and array return values
                 if isinstance(tempo, np.ndarray):
-                    return float(tempo[0] if len(tempo) > 0 else 120.0)
+                    return float(tempo[0] if len(tempo) > 0 else None)
                 return float(tempo)
         except Exception as e:
             logger.debug(f"Beat tracking failed: {e}")
@@ -123,12 +125,14 @@ class AudioAnalyzer:
             logger.debug(f"Onset-based tempo detection failed: {e}")
         
         # Final fallback
-        return 120.0
+        return None
     
-    def _detect_key_librosa(self, audio_file: str) -> str:
+    def _detect_key_librosa(self, audio_file: str) -> Optional[str]:
         """Detect key using librosa."""
         # Load audio file
         y, sr = librosa.load(audio_file, sr=self.sample_rate)
+        if y.size == 0 or not np.all(np.isfinite(y)) or np.max(np.abs(y)) < 1e-8:
+            return None
         
         # Extract chromagram (chroma feature) - represents pitch class content
         # Try CQT chromagram first (more accurate for harmonic content)
@@ -166,12 +170,15 @@ class AudioAnalyzer:
             correlations[f"{key}m"] = minor_corr
         
         # Find key with highest correlation
-        best_key = max(correlations, key=correlations.get)
+        finite = {key: score for key, score in correlations.items() if np.isfinite(score)}
+        if not finite:
+            return None
+        best_key = max(finite, key=finite.get)
         
         return best_key
 
 
-def analyze_audio(audio_file: str) -> Tuple[float, str]:
+def analyze_audio(audio_file: str) -> Tuple[Optional[float], Optional[str]]:
     """
     Convenience function to analyze audio file for BPM and key.
     

@@ -1,111 +1,33 @@
-# Installation Guide
+# Installation and troubleshooting
 
-## Quick Install (Conda - Recommended)
+Follow the [README installation steps](../README.md#install) for Python 3.11, system FFmpeg and a supported YouTube JavaScript runtime. Use an isolated environment so PTK does not alter other audio applications.
 
-```bash
-# Navigate to the project
-cd /Users/duan/Code/projects/project.producerTK/producer-toolkit
+## Diagnose the active installation
 
-# Create conda environment
-conda create -n producer-toolkit python=3.11 -y
-conda activate producer-toolkit
-
-# Install FFmpeg (REQUIRED for Demucs)
-conda install -c conda-forge ffmpeg -y
-
-# Install the package
-pip install -e .
+```sh
+ptk --version
+ptk doctor
+python -m pip check
 ```
 
-## Full Installation with Both Engines
+Diagnostics print the selected interpreter, source directory, dependencies, FFmpeg, runtime and model-cache status. They do not download anything or run inference. If a different command is selected, activate the intended virtual environment and check `command -v ptk`.
 
-### Option 1: Demucs Only (Default - Recommended)
+## YouTube extraction
 
-```bash
-# Create conda environment
-conda create -n producer-toolkit python=3.11 -y
-conda activate producer-toolkit
-
-# Install FFmpeg
-conda install -c conda-forge ffmpeg -y
-
-# Install the package (includes Demucs)
-pip install -e .
+```sh
+python -m pip install --upgrade 'yt-dlp[default]'
 ```
 
-### Option 2: Both Demucs and Spleeter
+Keep yt-dlp and its EJS dependencies current and make Deno or Node 22+ available. Some sources require authentication or restrict downloading; successful extraction is source-dependent. Playlist-only inputs are unsupported.
 
-```bash
-# Create conda environment
-conda create -n producer-toolkit python=3.11 -y
-conda activate producer-toolkit
+## Stem separation
 
-# Install FFmpeg
-conda install -c conda-forge ffmpeg -y
+The first separation fetches the pretrained htdemucs checkpoint. Allow network access and check available disk space. If fetching fails, retry after resolving the reported connection error; do not delete unrelated cached models.
 
-# Install the package
-pip install -e .
+CPU is the default and tested path. MPS/CUDA are optional and require a compatible system; compatibility and speed are not guaranteed. Existing outputs are preserved: choose a fresh output directory to repeat a job.
 
-# Install Spleeter (optional - for faster processing)
-pip install spleeter tensorflow
-```
+## Analysis
 
-## Using the Environment
+Tempo and key are estimates. Unknown results remain unknown. WAV conversion does not restore detail absent from a compressed source.
 
-```bash
-# Activate the environment
-conda activate producer-toolkit
-
-# Use the tool
-pt "YOUTUBE_URL" -s
-```
-
-## Required Dependencies
-
-### FFmpeg (REQUIRED)
-```bash
-conda install -c conda-forge ffmpeg -y
-```
-
-### Librosa (REQUIRED for BPM/Key Detection)
-Librosa is used for accurate BPM and key detection. It's actively maintained and works seamlessly with modern NumPy versions.
-
-**Installation:**
-Librosa is automatically installed when you run `pip install -e .`. No additional setup is required.
-
-**Features:**
-- ✅ Actively maintained and regularly updated
-- ✅ Works with modern NumPy versions (no compilation issues)
-- ✅ Good accuracy for BPM and key detection
-- ✅ Excellent documentation and community support
-
-## Troubleshooting
-
-### FFmpeg Missing
-```bash
-conda install -c conda-forge ffmpeg -y
-```
-
-### Spleeter Not Found
-```bash
-pip install spleeter tensorflow
-```
-
-### Demucs Model Download Issues
-```bash
-# Clear cache if needed
-rm -rf ~/.cache/torch/hub/checkpoints/
-```
-
-### Librosa Installation Issues
-If you encounter issues with librosa:
-
-1. **Ensure all dependencies are installed**:
-   ```bash
-   pip install numpy scipy scikit-learn numba
-   pip install librosa
-   ```
-
-2. **On macOS with Apple Silicon**, librosa should work out of the box with conda/pip installations.
-
-3. **Performance Note**: Librosa is slightly slower than aubio but provides excellent accuracy and modern compatibility.
+Spleeter, transcript extraction and the older directory-tree utility are not supported by this CLI. The separate GUI prototype is not part of the installation.

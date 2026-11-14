@@ -1,158 +1,77 @@
-# Producer Toolkit
+# Producer Toolkit 1.1.1
 
-A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs (default) or Spleeter.
+Download reference audio and prepare aligned stems for music production. The canonical command is `ptk`; `u` and `pt` use the same implementation.
 
-## Features
+YouTube downloads require a current `yt-dlp[default]` (including its matching EJS solver) and Deno or Node 22+. PTK enables an available runtime automatically. The 1.1.1 repair was verified with yt-dlp 2026.10.26, EJS 0.8.0 and Node 25.2.1 by downloading Fine — Days Incomplete. To refresh the downloader in this checkout, use `.venv/bin/python -m pip install --upgrade 'yt-dlp[default]'` from the project directory.
 
-- Download audio or video from YouTube links
-- Extract stems (vocals, drums, bass, other) from audio files
-- Automatic BPM and key detection using librosa
-- Enhanced file naming with musical features (e.g., `song_128bpm_Am.wav`)
-- Musical analysis for both main files and individual stems
-- Clean output format with organized file structure
-- Local model storage for faster processing
-- Cross-platform support (macOS, Linux, Windows)
-- Available as a Python package with global `ptk` command
+## Install
 
-## Quick Start
+Python 3.11 is the tested version. Install system FFmpeg and a JavaScript runtime (Deno or Node 22+) for YouTube extraction. On macOS with Homebrew:
 
-### Installation
-
-#### Option 1: Install as Python Package (Recommended)
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/producer-toolkit.git
+```sh
+brew install python@3.11 ffmpeg deno
+git clone https://github.com/danielsunyuan/producer-toolkit.git
 cd producer-toolkit
-```
-
-2. Install the package:
-```bash
-# Install in development mode (recommended for development)
-pip install -e .
-
-# Or install globally (available system-wide)
-pip install -e .
-```
-
-3. Use the `ptk` command from anywhere:
-```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install .
 ptk --help
+ptk doctor
 ```
 
-### Basic Usage
+On Linux, install Python 3.11, FFmpeg and Deno using your system's supported installation method, then follow the clone/environment/package steps above. Windows has not been verified.
 
-#### Using the `ptk` command (if installed as package):
-```bash
-# Extract stems with BPM and key analysis (default)
-ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+Installation registers `ptk`, `u` and `pt`; check for existing commands before installing. The first separation downloads the pretrained htdemucs checkpoint. Processing runs locally; downloads and the initial model fetch require network access.
 
-# Download audio only (no BPM/key analysis)
-ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
+For development, use `python -m pip install -e .` instead. The optional `activate.sh` and `bin/` wrappers activate this checkout without replacing a global command. Existing Mac launchers remain available for the original local setup.
 
-# Download video
-ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
+## Music workflow
 
-# Extract 4 stems with musical analysis (default: Demucs)
-ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+```sh
+# Single track → stereo 44.1 kHz / 24-bit WAV in Downloads
+u "URL" -a
 
-# Extract 2 stems (vocals and accompaniment)
-ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s -n 2
+# URL → preserved source WAV + four aligned stems
+ptk "URL" -s
 
-# Use Spleeter engine (optional, requires separate installation)
-ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --engine spleeter
+# Local audio → four stems; original remains intact
+ptk "/path/to/song.wav" -s -o "$HOME/Music/PTK"
 
-# Disable BPM/key analysis for faster processing
-ptk "https://www.youtube.com/watch?v=YOUTUBE_ID" -s --no-analysis
+# Vocals and accompaniment
+ptk "/path/to/song.wav" -s -n 2 -o "$HOME/Music/PTK"
+# Legacy aliases -acca and -inst both produce this two-stem pair.
 
-# Example output filenames:
-# song_title_125bpm_Am.wav (main audio when -a used)
-# vocals_125bpm_Am.wav (vocal stem)
-# drums_125bpm_Am.wav (drum stem)
+# Skip estimated BPM/key metadata
+ptk "/path/to/song.wav" -s --no-analysis
+
+# Estimate tempo/key without changing the file
+ptk "/path/to/song.wav" --analyze
+
+# Download a single MP4
+ptk "URL" -v
 ```
 
-#### Using the traditional method:
-```bash
-# Extract stems (vocals, drums, bass, other)
-python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
+CPU is the default for compatibility. `--device mps` and `--device cuda` are available for environments that support them; only explicitly tested configurations should be treated as verified.
 
-# Download audio only
-python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -a
+Downloads use title plus source ID to reduce name collisions, and record provenance in a JSON sidecar. Stem folders contain stable stem filenames and `manifest.json`. Outputs are never silently overwritten: choose another output directory for a rerun. Every requested stem must exist and have matching length, sample rate and channel count before success is reported. Only job-owned temporary storage is cleaned up.
 
-# Download video
-python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -v
+BPM/key are estimates. Failed detection is `null`/`unknown`, not an invented 120 BPM or C. WAV conversion does not restore detail absent from the source. Separation requires a model checkpoint; the doctor command reports whether htdemucs is cached without loading or downloading it.
+
+Playlist-only inputs are rejected. A single video link with playlist parameters processes only that video. The local experimental transcript/playlist additions in the previous checkout have not been integrated into this release; those original files remain untouched. Spleeter and the unrelated legacy directory-tree flag are not part of this repaired CLI.
+
+## Verification
+
+```sh
+python -m unittest tests.test_safe_workflow tests.test_audio_analyzer -v
 ```
 
-## Installation
+Offline regression tests verify preservation of unrelated files, missing/partial stems, failing subprocesses, sanitized downloader paths, playlist rejection, conflicting flags, and output collisions. They are separate from real-model and live-download smoke tests. The verified local configuration is macOS / Python 3.11 / CPU. A generated audio fixture has also exercised real two/four-stem inference; automated regression tests alone do not establish music separation quality or live-site reliability.
 
-See the [INSTALL.md](INSTALL.md) file for detailed installation instructions.
+## How it works
 
-## Project Structure
+The CLI selects a download, local analysis or separation operation. yt-dlp resolves a single source into job-specific temporary storage; FFmpeg converts audio. Demucs runs through the same Python interpreter as PTK. SoundFile checks output metadata before files are published, while librosa provides optional tempo/key estimates. Exclusive file creation prevents silent replacement; failure cleanup removes only artifacts created by that job.
 
-```
-.
-├── producer_toolkit/     # Main Python package
-│   ├── __init__.py      # Package initialization
-│   ├── cli.py           # Command-line interface
-│   ├── downloader/      # YouTube downloading tools
-│   └── processor/       # Audio processing tools
-│       └── utils/       # Utility functions
-├── main.py               # Legacy CLI entry point
-├── setup.py              # Python package configuration
-├── pyproject.toml        # Modern Python packaging
-├── requirements.txt      # Python dependencies
-├── INSTALL.md            # Installation guide
-├── scripts/              # Helper scripts
-│   └── windows/          # Windows-specific scripts
-└── tests/                # Test suite
-```
+This project integrates pretrained Demucs models; it does not train a separation model. There is no supported GUI, transcript mode, batch playlist mode or native Ableton project export. Use media you own or have permission to process.
 
-## Development
-
-### Running Tests
-
-```bash
-# Run all unit tests
-python -m tests.run_tests
-```
-
-### Package Development
-
-```bash
-# Install in development mode
-pip install -e .
-
-# Test the package
-pt --help
-```
-
-## Musical Analysis
-
-The toolkit includes automatic BPM (beats per minute) and key detection using [librosa](https://librosa.org/), a powerful audio analysis library. This feature:
-
-- Analyzes audio files to detect tempo and musical key
-- Automatically includes this information in filenames
-- Works for both main downloads and individual stems (stems only)
-- Can be disabled with `--no-analysis` for faster processing
-
-### Example Output
-
-With musical analysis enabled (default):
-```
-song_title_128bmp_C.wav           # Main audio file
-vocals_128bpm_C.wav               # Vocal stem
-drums_128bpm_C.wav                # Drum stem  
-bass_128bpm_C.wav                 # Bass stem
-other_128bpm_C.wav                # Other instruments stem
-```
-
-## First-Time Use
-
-On first run:
-1. Demucs will download pretrained models (approximately 2GB for htdemucs model). These will be stored in your home directory under `~/.cache/torch/hub/checkpoints/` by default.
-2. Librosa will be used for audio analysis (included with the package).
-3. FFmpeg is required for Demucs to work properly - install via conda or system package manager.
-
-## License
-
-[MIT License](LICENSE)
+See [testing instructions](tests/README.md), [verification results](docs/VERIFICATION.md) and [release notes](CHANGELOG.md).

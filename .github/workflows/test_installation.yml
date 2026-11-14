@@ -11,7 +11,10 @@ defaults:
 
 jobs:
   test-installation:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       
@@ -20,6 +23,14 @@ jobs:
         with:
           python-version: "3.11"
       
+      - name: Install FFmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install FFmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+
       - name: Install package dependencies
         run: |
           python -m pip install --upgrade pip
@@ -27,7 +38,7 @@ jobs:
       
       - name: Run unit tests
         run: |
-          python -m unittest discover tests/ -p "test_audio_analyzer.py" -v
+          python -m unittest tests.test_safe_workflow tests.test_audio_analyzer -v
       
       - name: Test package installation
         run: |

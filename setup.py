@@ -18,13 +18,13 @@ requirements = parse_requirements('requirements.txt')
 
 setup(
     name="producer-toolkit",
-    version="1.0.0",
+    version="1.1.1",
     author="Daniel",
-    author_email="your-email@example.com",
+    author_email="danielsunyuan@gmail.com",
     description="A command-line toolkit for music producers to download audio/video from YouTube and extract stems using Demucs",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/producer-toolkit",
+    url="https://github.com/danielsunyuan/producer-toolkit",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -33,17 +33,17 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Topic :: Multimedia :: Sound/Audio",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    python_requires=">=3.9",
+    python_requires=">=3.11",
     install_requires=requirements,
     entry_points={
         "console_scripts": [
             "ptk=producer_toolkit.cli:main",
+            "u=producer_toolkit.cli:main",
+            "pt=producer_toolkit.cli:main",
         ],
     },
     include_package_data=True,
