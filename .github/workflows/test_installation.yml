@@ -38,7 +38,7 @@ jobs:
       
       - name: Run unit tests
         run: |
-          python -m unittest tests.test_safe_workflow tests.test_audio_analyzer -v
+          python -m unittest tests.test_safe_workflow tests.test_audio_analyzer tests.test_video_download -v
       
       - name: Test package installation
         run: |

@@ -5,10 +5,10 @@ Install the package in a Python 3.11 environment with system FFmpeg available.
 ## Offline regression suite
 
 ```sh
-python -m unittest tests.test_safe_workflow tests.test_audio_analyzer -v
+python -m unittest tests.test_safe_workflow tests.test_audio_analyzer tests.test_video_download -v
 ```
 
-The 34 tests exercise file preservation, collisions, single-item URL behavior, partial or mismatched stems, subprocess failures and nullable analysis results. Fixtures are generated in temporary directories. One test uses real yt-dlp/FFmpeg conversion on a local fixture; downloads and model inference are mocked in the remaining workflow tests.
+The workflow and analyzer tests exercise file preservation, collisions, single-item URL behavior, partial or mismatched stems, subprocess failures and nullable analysis results. Fixtures are generated in temporary directories. One test uses real yt-dlp/FFmpeg conversion on a local fixture; downloads and model inference are mocked in the remaining workflow tests.
 
 ## Manual smoke checks
 
@@ -23,3 +23,7 @@ ptk "/path/to/owned-audio.wav" -s -n 2 --no-analysis -o ./smoke-two
 Real separation requires the pretrained model, downloads it on first use and can take substantially longer than the offline suite. Check the exported files, manifest and source preservation. Use a permitted single-video URL to separately verify live downloading.
 
 The older `test_integration.py` contains network/model tests and is not part of the offline regression command. Unrestricted test discovery can invoke those expensive operations. No music-quality benchmark or accelerator compatibility is implied by the offline tests.
+
+## Video regression coverage
+
+`tests.test_video_download` adds synthetic format ladders and generated local FFmpeg fixtures. It checks same-tier H.264 preference, 4K/high-frame-rate fallback without downscaling, best-source selection, real split-stream merging, codec-aware copy/remux/encoding, 4:4:4 conversion, fractional frame rate/duration/audio preservation, originals, output/sidecar collisions, failure cleanup and playlist rejection. Local fixture URLs are enabled only in tests. Both FFmpeg and ffprobe are required for real-media checks; those checks are skipped when unavailable. No live-site or editor-import claim follows from these tests.

@@ -34,7 +34,7 @@ def main(argv=None):
     parser.add_argument("source", help="Video URL or local audio file")
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("-a", "--audio", action="store_true", help="Download WAV audio (default)")
-    modes.add_argument("-v", "--video", action="store_true", help="Download MP4 video")
+    modes.add_argument("-v", "--video", action="store_true", help="Download compatible H.264/AAC MP4 video")
     modes.add_argument("-s", "--stems", action="store_true", help="Extract stems from a URL or local audio")
     modes.add_argument("-acca", "--accapella", action="store_true", help="Extract vocals and accompaniment")
     modes.add_argument("-inst", "--instrumental", action="store_true", help="Extract accompaniment and vocals")
@@ -44,8 +44,12 @@ def main(argv=None):
     parser.add_argument("--analyze", action="store_true", help="Analyze local audio without separation")
     parser.add_argument("--engine", choices=("demucs",), default="demucs")
     parser.add_argument("--device", choices=("cpu", "mps", "cuda"), default="cpu")
+    parser.add_argument("--video-quality", choices=("compatible", "best"), default=None,
+                        help="With -v: compatible (default) preserves resolution/fps, converts if needed; best copies source streams (container may vary); AV1/VP9 may not import into some editors")
     parser.add_argument("--version", action="version", version=f"PTK {__version__}")
     options = parser.parse_args(argv)
+    if options.video_quality is not None and not options.video:
+        parser.error("--video-quality requires -v/--video")
     try:
         is_url = urlparse(options.source).scheme in ("http", "https")
         local = None if is_url else Path(options.source).expanduser().resolve(strict=True)
@@ -72,7 +76,7 @@ def main(argv=None):
             print(f"Stems ready: {stem_output}")
         elif is_url:
             from .downloader.download import download_audio, download_video
-            result = download_video(options.source, output) if options.video else download_audio(options.source, output, analyze_features=False)
+            result = download_video(options.source, output, quality=options.video_quality or "compatible") if options.video else download_audio(options.source, output, analyze_features=False)
             print(f"Saved: {result}")
         else:
             parser.error("For local audio use -s (stems) or --analyze; the source is never modified.")

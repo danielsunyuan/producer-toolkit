@@ -48,8 +48,11 @@ ptk "/path/to/song.wav" -s --no-analysis
 # Estimate tempo/key without changing the file
 ptk "/path/to/song.wav" --analyze
 
-# Download a single MP4
+# Compatible MP4 (H.264/AAC), preserving the best resolution and frame rate
 ptk "URL" -v
+
+# Best source streams, without lossy conversion
+ptk "URL" -v --video-quality best
 ```
 
 CPU is the default for compatibility. `--device mps` and `--device cuda` are available for environments that support them; only explicitly tested configurations should be treated as verified.
@@ -60,10 +63,26 @@ BPM/key are estimates. Failed detection is `null`/`unknown`, not an invented 120
 
 Playlist-only inputs are rejected. A single video link with playlist parameters processes only that video. The local experimental transcript/playlist additions in the previous checkout have not been integrated into this release; those original files remain untouched. Spleeter and the unrelated legacy directory-tree flag are not part of this repaired CLI.
 
+## Video quality modes
+
+`ptk "URL" -v` defaults to **Compatible MP4** (`--video-quality compatible`):
+
+- Select the highest available resolution and frame-rate tier, including 4K. Prefer an H.264 stream in that same tier and an AAC audio stream when available; do not fall back to lower resolution or frame rate merely to avoid conversion.
+- Check the downloaded codecs with ffprobe. H.264 8-bit 4:2:0 (`yuv420p`) and AAC are copied. A compatible MP4 is kept unchanged; compatible streams in another container are remuxed without re-encoding.
+- Otherwise convert only the incompatible streams: video uses software H.264 (`libx264`, CRF 18, slow preset, 8-bit 4:2:0), and audio uses AAC at 320 kb/s. Existing AAC audio is copied. Video dimensions and frame timing are retained; there is no forced frame rate, downscale or upscale. Silent sources remain silent.
+
+Conversion takes extra time, may produce substantially larger files, and introduces a generation of loss in the streams that are encoded. H.264/AAC improves editor compatibility, but does not guarantee import into every editor/version. **Final Cut Pro import has not been verified.** HDR-to-SDR tone mapping is not implemented; use best-source mode to retain original HDR precision rather than relying on this 8-bit conversion for HDR delivery.
+
+`ptk "URL" -v --video-quality best` selects **Best source quality**: keep the highest-tier source video and best available audio without lossy conversion. Split streams are merged into MKV using stream copy; a single muxed source keeps its container. The extension follows the actual container rather than forcing `.mp4`. AV1, VP9, Opus and other source formats may not import into some video editors. Supply an output directory so PTK can choose the appropriate filename/container.
+
+Both modes keep the single-video policy and refuse output or sidecar collisions. Existing files are untouched. Downloaded intermediates belong to the temporary job and are removed after success/failure; choose best-source mode when you want a retained source-quality download. The JSON sidecar records the mode, selected format IDs/codecs/resolution/frame rate, any lossless download merge, probed input/output properties, and per-stream copy/encoding decisions with conversion settings. Source-format metadata can be incomplete; the probed properties describe the actual downloaded media. Sidecars exclude stream URLs and authentication headers.
+
+FFmpeg (including ffprobe, libx264 and AAC encoding support) is required. `--video-quality` is accepted only with `-v`; audio and stem commands retain their existing behavior.
+
 ## Verification
 
 ```sh
-python -m unittest tests.test_safe_workflow tests.test_audio_analyzer -v
+python -m unittest tests.test_safe_workflow tests.test_audio_analyzer tests.test_video_download -v
 ```
 
 Offline regression tests verify preservation of unrelated files, missing/partial stems, failing subprocesses, sanitized downloader paths, playlist rejection, conflicting flags, and output collisions. They are separate from real-model and live-download smoke tests. The verified local configuration is macOS / Python 3.11 / CPU. A generated audio fixture has also exercised real two/four-stem inference; automated regression tests alone do not establish music separation quality or live-site reliability.
