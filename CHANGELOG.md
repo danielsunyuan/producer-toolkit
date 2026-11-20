@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — optional download metadata
+
+- Audio and video downloads now save only the media file by default. Use `--metadata` to opt in to the JSON provenance sidecar. Stem manifests are unchanged.
+
 ## Unreleased — video compatibility
 
 - Default video downloads to H.264 8-bit 4:2:0 / AAC MP4, preserving the highest available resolution and frame rate. Prefer compatible same-tier streams; copy existing compatible streams and convert incompatible streams automatically.

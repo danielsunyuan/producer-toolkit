@@ -46,6 +46,7 @@ def main(argv=None):
     parser.add_argument("--device", choices=("cpu", "mps", "cuda"), default="cpu")
     parser.add_argument("--video-quality", choices=("compatible", "best"), default=None,
                         help="With -v: compatible (default) preserves resolution/fps, converts if needed; best copies source streams (container may vary); AV1/VP9 may not import into some editors")
+    parser.add_argument("--metadata", action="store_true", help="Save an optional JSON sidecar alongside downloaded media")
     parser.add_argument("--version", action="version", version=f"PTK {__version__}")
     options = parser.parse_args(argv)
     if options.video_quality is not None and not options.video:
@@ -67,7 +68,7 @@ def main(argv=None):
             if local is None:
                 from .downloader.download import download_audio
                 print("Downloading source audio…", flush=True)
-                local = Path(download_audio(options.source, output, analyze_features=False))
+                local = Path(download_audio(options.source, output, analyze_features=False, metadata=options.metadata))
             stem_output = output / (local.stem + "_stems")
             print(f"Separating stems using {options.device}…", flush=True)
             extract_stems(str(local), str(stem_output),
@@ -76,7 +77,7 @@ def main(argv=None):
             print(f"Stems ready: {stem_output}")
         elif is_url:
             from .downloader.download import download_audio, download_video
-            result = download_video(options.source, output, quality=options.video_quality or "compatible") if options.video else download_audio(options.source, output, analyze_features=False)
+            result = download_video(options.source, output, quality=options.video_quality or "compatible", metadata=options.metadata) if options.video else download_audio(options.source, output, analyze_features=False, metadata=options.metadata)
             print(f"Saved: {result}")
         else:
             parser.error("For local audio use -s (stems) or --analyze; the source is never modified.")

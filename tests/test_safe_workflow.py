@@ -118,7 +118,9 @@ class SafeWorkflowTests(unittest.TestCase):
         factory.side_effect = make_downloader
         result = Path(download_audio("https://example.com/video", self.output))
         self.assertEqual(result.name, "sanitized [id].wav")
-        self.assertTrue(result.with_suffix(".wav.json").is_file())
+        self.assertFalse(result.with_suffix(".wav.json").exists())
+        with_metadata = Path(download_audio("https://example.com/video", self.output / "with-metadata", metadata=True))
+        self.assertTrue(with_metadata.with_suffix(".wav.json").is_file())
         self.assert_preserved()
 
     @patch("yt_dlp.YoutubeDL")

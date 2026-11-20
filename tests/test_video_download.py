@@ -63,6 +63,18 @@ class FormatSelectionTests(unittest.TestCase):
                     main(["https://example.com/id", *flags, "--video-quality", "best", "-o", root])
                 self.assertEqual(error.exception.code, 2)
 
+    def test_cli_metadata_is_opt_in_for_audio_and_video(self):
+        with tempfile.TemporaryDirectory() as root:
+            for mode, function in (("-a", "download_audio"), ("-v", "download_video")):
+                for enabled in (False, True):
+                    with self.subTest(mode=mode, enabled=enabled), patch(
+                            "producer_toolkit.downloader.download." + function, return_value="media") as download:
+                        args = ["https://example.com/video", mode, "-o", root]
+                        if enabled:
+                            args.append("--metadata")
+                        self.assertEqual(main(args), 0)
+                        self.assertEqual(download.call_args.kwargs["metadata"], enabled)
+
 
 @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"), "FFmpeg and ffprobe required")
 class RealVideoTests(unittest.TestCase):
@@ -88,15 +100,23 @@ class RealVideoTests(unittest.TestCase):
         self.sentinel = self.out / "unrelated.mp4"
         self.sentinel.write_bytes(b"preserve")
 
-    def download(self, fixture, quality="compatible", output=None):
+    def download(self, fixture, quality="compatible", output=None, metadata=True):
         import yt_dlp
         real = yt_dlp.YoutubeDL
         with patch("yt_dlp.YoutubeDL", side_effect=lambda opts: real(dict(opts, enable_file_urls=True, noprogress=True))):
-            return Path(download_video(fixture.as_uri(), output or self.out, quality=quality))
+            kwargs = {} if metadata is None else {"metadata": metadata}
+            return Path(download_video(fixture.as_uri(), output or self.out, quality=quality, **kwargs))
 
     def probe(self, path):
         from producer_toolkit.downloader.video import probe_video
         return probe_video(path)
+
+    def test_default_downloads_produce_only_media_in_both_modes(self):
+        for quality, source in (("compatible", self.avc), ("best", self.vp9)):
+            output = self.out / quality
+            result = self.download(source, quality, output=output, metadata=None)
+            self.assertEqual([f.resolve() for f in output.iterdir()], [result])
+            self.assertTrue(result.is_file())
 
     def test_compatible_streams_are_not_reencoded(self):
         result = self.download(self.avc)
@@ -185,7 +205,7 @@ class RealVideoTests(unittest.TestCase):
 
         for quality in ("compatible", "best"):
             with self.subTest(quality=quality), patch("yt_dlp.YoutubeDL", side_effect=client):
-                result = Path(download_video("ptk-fixture:video", self.out / quality, quality=quality))
+                result = Path(download_video("ptk-fixture:video", self.out / quality, quality=quality, metadata=True))
                 metadata = json.loads(result.with_suffix(result.suffix + ".json").read_text())
                 expected = ["avc", "aac"] if quality == "compatible" else ["vp9", "audio-opus"]
                 self.assertEqual([f["format_id"] for f in metadata["selected_formats"]], expected)

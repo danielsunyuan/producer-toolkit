@@ -8,7 +8,7 @@ from functools import partial
 from .video import prepare_video, select_video_formats
 from ..files import publish
 
-def _download(url, output_path, audio, video_quality="compatible"):
+def _download(url, output_path, audio, video_quality="compatible", write_metadata=False):
     if video_quality not in ("compatible", "best"):
         raise ValueError("Video quality must be compatible or best.")
     import yt_dlp
@@ -90,24 +90,26 @@ def _download(url, output_path, audio, video_quality="compatible"):
                         source_url=info.get("webpage_url", url), source_id=info.get("id"),
                         title=info.get("title"), artifact=destination.name)
         staged_manifest = Path(job) / "manifest.json"
-        staged_manifest.write_text(json.dumps(metadata, indent=2) + "\n")
+        if write_metadata:
+            staged_manifest.write_text(json.dumps(metadata, indent=2) + "\n")
         result = publish(source, destination)
-        try:
-            publish(staged_manifest, destination.with_suffix(suffix + ".json"))
-        except BaseException:
-            Path(result).unlink(missing_ok=True)
-            raise
+        if write_metadata:
+            try:
+                publish(staged_manifest, destination.with_suffix(suffix + ".json"))
+            except BaseException:
+                Path(result).unlink(missing_ok=True)
+                raise
         return result
 
-def download_audio(url, output_path=None, analyze_features=False):
+def download_audio(url, output_path=None, analyze_features=False, metadata=False):
     """Download stereo 44.1 kHz 24-bit WAV without overwriting existing audio."""
-    result = _download(url, output_path, True)
+    result = _download(url, output_path, True, write_metadata=metadata)
     if analyze_features:
         from ..analyzer.audio_analyzer import analyze_audio
         bpm, key = analyze_audio(result)
         print(f"Estimated tempo: {bpm or 'unknown'}; key: {key or 'unknown'}")
     return result
 
-def download_video(url, output_path=None, quality="compatible"):
+def download_video(url, output_path=None, quality="compatible", metadata=False):
     """Download H.264/AAC MP4 by default, or preserve source streams with best."""
-    return _download(url, output_path, False, video_quality=quality)
+    return _download(url, output_path, False, video_quality=quality, write_metadata=metadata)

@@ -57,7 +57,7 @@ ptk "URL" -v --video-quality best
 
 CPU is the default for compatibility. `--device mps` and `--device cuda` are available for environments that support them; only explicitly tested configurations should be treated as verified.
 
-Downloads use title plus source ID to reduce name collisions, and record provenance in a JSON sidecar. Stem folders contain stable stem filenames and `manifest.json`. Outputs are never silently overwritten: choose another output directory for a rerun. Every requested stem must exist and have matching length, sample rate and channel count before success is reported. Only job-owned temporary storage is cleaned up.
+Downloads use title plus source ID to reduce name collisions, and save only the media file by default. Add `--metadata` to also save a provenance JSON sidecar. Stem folders contain stable stem filenames and `manifest.json`. Outputs are never silently overwritten: choose another output directory for a rerun. Every requested stem must exist and have matching length, sample rate and channel count before success is reported. Only job-owned temporary storage is cleaned up.
 
 BPM/key are estimates. Failed detection is `null`/`unknown`, not an invented 120 BPM or C. WAV conversion does not restore detail absent from the source. Separation requires a model checkpoint; the doctor command reports whether htdemucs is cached without loading or downloading it.
 
@@ -75,7 +75,7 @@ Conversion takes extra time, may produce substantially larger files, and introdu
 
 `ptk "URL" -v --video-quality best` selects **Best source quality**: keep the highest-tier source video and best available audio without lossy conversion. Split streams are merged into MKV using stream copy; a single muxed source keeps its container. The extension follows the actual container rather than forcing `.mp4`. AV1, VP9, Opus and other source formats may not import into some video editors. Supply an output directory so PTK can choose the appropriate filename/container.
 
-Both modes keep the single-video policy and refuse output or sidecar collisions. Existing files are untouched. Downloaded intermediates belong to the temporary job and are removed after success/failure; choose best-source mode when you want a retained source-quality download. The JSON sidecar records the mode, selected format IDs/codecs/resolution/frame rate, any lossless download merge, probed input/output properties, and per-stream copy/encoding decisions with conversion settings. Source-format metadata can be incomplete; the probed properties describe the actual downloaded media. Sidecars exclude stream URLs and authentication headers.
+Both modes keep the single-video policy and refuse media output collisions (and sidecar collisions when `--metadata` is enabled). Existing files are untouched. Downloaded intermediates belong to the temporary job and are removed after success/failure; choose best-source mode when you want a retained source-quality download. When requested with `--metadata`, the JSON sidecar records the mode, selected format IDs/codecs/resolution/frame rate, any lossless download merge, probed input/output properties, and per-stream copy/encoding decisions with conversion settings. Source-format metadata can be incomplete; the probed properties describe the actual downloaded media. Sidecars exclude stream URLs and authentication headers.
 
 FFmpeg (including ffprobe, libx264 and AAC encoding support) is required. `--video-quality` is accepted only with `-v`; audio and stem commands retain their existing behavior.
 
