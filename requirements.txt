@@ -1,15 +1,1 @@
-# Core dependencies for downloading and processing
-yt-dlp[default]>=2026.10.26
-demucs>=4.0.0
-ffmpeg-python==0.2.0
-
-# Audio processing libraries
-librosa>=0.10.0
-soundfile==0.12.1
-pydub==0.25.1
-
-# Machine learning dependencies (for Demucs/PyTorch)
-numpy>=1.22.4
-torch>=2.0.0
-torchaudio>=2.0.0
-torchcodec>=0.8.0
+.

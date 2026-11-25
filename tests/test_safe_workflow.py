@@ -19,7 +19,8 @@ class SafeWorkflowTests(unittest.TestCase):
         self.addCleanup(self.workspace.cleanup)
         self.root = Path(self.workspace.name)
         self.source = self.root / "input.wav"
-        sf.write(str(self.source), np.zeros((4410, 2)), 44100)
+        tone = np.sin(np.arange(4410) * 0.1) * 0.1
+        sf.write(str(self.source), np.column_stack([tone, tone]), 44100)
         self.original = self.source.read_bytes()
         self.output = self.root / "outputs"
         self.output.mkdir()
@@ -157,6 +158,7 @@ class SafeWorkflowTests(unittest.TestCase):
 
     def test_silence_does_not_invent_tempo_or_key(self):
         from producer_toolkit.analyzer.audio_analyzer import analyze_audio
+        sf.write(str(self.source), np.zeros((4410, 2)), 44100)
         self.assertEqual(analyze_audio(str(self.source)), (None, None))
 
     @patch("producer_toolkit.processor.demucs_processor.subprocess.run")
@@ -172,3 +174,28 @@ class SafeWorkflowTests(unittest.TestCase):
         self.assertFalse((self.output / "vocals.wav").exists())
         self.assertEqual((self.output / "drums.wav").read_bytes(), b"another job owns this")
         self.assert_preserved()
+
+    @patch("producer_toolkit.processor.demucs_processor.subprocess.run")
+    def test_generated_stems_obey_size_limit_before_publication(self, run):
+        from producer_toolkit.limits import Limits
+        def oversized(command, **kwargs):
+            self.fake_demucs(command, **kwargs)
+            job = Path(command[command.index('-o') + 1])
+            sf.write(job / 'htdemucs/input/bass.wav', np.zeros((4410, 2)), 44100, subtype='DOUBLE')
+        run.side_effect = oversized
+        with self.assertRaisesRegex(ValueError, 'size'):
+            extract_stems(self.source, self.output, limits=Limits(max_bytes=50000), analyze_features=False)
+        self.assert_preserved()
+        self.assertEqual(list(self.output.iterdir()), [self.sentinel])
+
+    @patch("producer_toolkit.processor.demucs_processor.subprocess.run")
+    def test_nonfinite_stem_samples_are_not_published(self, run):
+        def invalid(command, **kwargs):
+            self.fake_demucs(command, **kwargs)
+            job = Path(command[command.index('-o') + 1])
+            sf.write(job / 'htdemucs/input/bass.wav', np.full((4410, 2), np.nan), 44100, subtype='FLOAT')
+        run.side_effect = invalid
+        with self.assertRaisesRegex(RuntimeError, 'non-finite'):
+            extract_stems(self.source, self.output, analyze_features=False)
+        self.assert_preserved()
+        self.assertEqual(list(self.output.iterdir()), [self.sentinel])

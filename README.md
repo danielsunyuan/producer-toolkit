@@ -1,4 +1,6 @@
-# Producer Toolkit 1.1.1
+# Producer Toolkit 1.2.0.dev0
+
+**Development build.** PTK code is MIT-licensed, but the pretrained Demucs weights have unresolved licensing. See [third-party and model notes](THIRD_PARTY.md) before commercial use or redistribution. No weights or FFmpeg binaries are bundled.
 
 Download reference audio and prepare aligned stems for music production. The canonical command is `ptk`; `u` and `pt` use the same implementation.
 
@@ -15,12 +17,13 @@ cd producer-toolkit
 python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install .
+python -m pip install --require-hashes -r requirements/macos-arm64-py311.txt
+python -m pip install --no-deps .
 ptk --help
 ptk doctor
 ```
 
-On Linux, install Python 3.11, FFmpeg and Deno using your system's supported installation method, then follow the clone/environment/package steps above.
+These reference dependencies target Apple Silicon macOS. On Linux x86-64 with glibc 2.28+, install Python 3.11, FFmpeg and Deno, then use `requirements/linux-amd64-py311.txt` in the same steps. See [dependency sets](requirements/README.md) for scope and regeneration. General `pip install .` resolves compatible versions for development rather than reproducing a locked configuration.
 
 On Windows, install Python 3.11 and put FFmpeg/ffprobe and Deno or Node 22+ on PATH. From Command Prompt in the cloned repository:
 
@@ -104,3 +107,19 @@ The CLI selects a download, local analysis or separation operation. yt-dlp resol
 This project integrates pretrained Demucs models; it does not train a separation model. There is no supported GUI, transcript mode, batch playlist mode or native Ableton project export. Use media you own or have permission to process.
 
 See [testing instructions](tests/README.md), [verification results](docs/VERIFICATION.md) and [release notes](CHANGELOG.md).
+
+Silent or constant input (including stereo that cancels when mixed to mono) is rejected before model loading. Audio containing NaN or infinity is also rejected. Very quiet, varying audio remains valid; no output files are created for rejected input.
+
+Publication stages complete files privately, flushes them to disk and links them into place without replacing existing paths. This requires a local filesystem supporting hard links (such as APFS, NTFS or ext4). A stem folder is complete only when `manifest.json` is present. One PTK stem job owns a folder at a time. After an abrupt termination, hidden `.ptk-publish-*` files or a `.ptk-lock` may remain; use a fresh output folder, or inspect the recorded owner and confirm the job has stopped before manually removing its private leftovers. PTK does not automatically reclaim another job's files.
+
+## Resource limits and source privacy
+
+Defaults are one hour (`--max-duration 3600`), 2 GiB per media file/download job (`--max-size-mb 2048`), and a 1 GiB free-space reserve (`--min-free-mb 1024`). Raise limits explicitly for larger work. PTK checks local input and available metadata before expensive work, checks download size/free space during transfer, and checks decoded duration and completed media size before publication. Stem-space estimates include staging and publication copies. These checks are not operating-system quotas; conversions, model caches and other processes can require additional space.
+
+HTTP(S) URLs with embedded usernames/passwords or control characters are rejected. Saved source URLs and download messages remove private query parameters/fragments; a valid YouTube video ID can remain. Local source paths still appear in stem manifests, so review manifests before sharing. PTK is a local tool, not a remotely exposed download service; no hosted-service URL/redirect isolation is claimed.
+
+## Local desktop window
+
+Run `ptk-gui` after installing PTK, or `python -m producer_toolkit.desktop`. Python must include Tk (the Python.org Windows installer includes it; use a Tk-enabled Python build on macOS/Linux).
+
+Choose a source file or enter a URL, select an operation and output folder, then Run. The window uses the same CLI/backend, CPU defaults, validation and output safeguards. It shows live logs, runs one job at a time and preserves existing outputs. This first version has no in-window cancellation: wait for the job to finish before closing. For larger jobs or custom resource limits, use the CLI. It is a Python desktop interface, not a signed standalone application.
