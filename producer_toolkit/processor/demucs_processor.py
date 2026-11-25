@@ -11,12 +11,24 @@ from ..files import publish
 def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None,
                   analyze_features=True, device="cpu"):
     import soundfile as sf
+    import numpy as np
     if stem_number not in (2, 4):
         raise ValueError("Demucs supports 2 or 4 stems.")
     source = Path(audio_path).expanduser().resolve(strict=True)
     original = sf.info(str(source))
     if original.frames == 0:
         raise ValueError("Input audio is empty.")
+    first = None
+    varying = False
+    for block in sf.blocks(str(source), blocksize=65536, dtype="float64", always_2d=True):
+        if not np.isfinite(block).all():
+            raise ValueError("Input audio contains non-finite samples.")
+        mono = block.mean(axis=1)
+        if first is None:
+            first = mono[0]
+        varying = varying or bool(np.any(mono != first))
+    if not varying:
+        raise ValueError("Input audio is silent or constant after mixing to mono; separation needs a varying signal.")
     destination = Path(output_dir).expanduser().resolve()
     destination.mkdir(parents=True, exist_ok=True)
     names = ["vocals", "no_vocals"] if stem_number == 2 else ["vocals", "drums", "bass", "other"]

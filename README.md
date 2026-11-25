@@ -104,3 +104,5 @@ The CLI selects a download, local analysis or separation operation. yt-dlp resol
 This project integrates pretrained Demucs models; it does not train a separation model. There is no supported GUI, transcript mode, batch playlist mode or native Ableton project export. Use media you own or have permission to process.
 
 See [testing instructions](tests/README.md), [verification results](docs/VERIFICATION.md) and [release notes](CHANGELOG.md).
+
+Silent or constant input (including stereo that cancels when mixed to mono) is rejected before model loading. Audio containing NaN or infinity is also rejected. Very quiet, varying audio remains valid; no output files are created for rejected input.

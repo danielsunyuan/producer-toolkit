@@ -19,7 +19,8 @@ class SafeWorkflowTests(unittest.TestCase):
         self.addCleanup(self.workspace.cleanup)
         self.root = Path(self.workspace.name)
         self.source = self.root / "input.wav"
-        sf.write(str(self.source), np.zeros((4410, 2)), 44100)
+        tone = np.sin(np.arange(4410) * 0.1) * 0.1
+        sf.write(str(self.source), np.column_stack([tone, tone]), 44100)
         self.original = self.source.read_bytes()
         self.output = self.root / "outputs"
         self.output.mkdir()
@@ -157,6 +158,7 @@ class SafeWorkflowTests(unittest.TestCase):
 
     def test_silence_does_not_invent_tempo_or_key(self):
         from producer_toolkit.analyzer.audio_analyzer import analyze_audio
+        sf.write(str(self.source), np.zeros((4410, 2)), 44100)
         self.assertEqual(analyze_audio(str(self.source)), (None, None))
 
     @patch("producer_toolkit.processor.demucs_processor.subprocess.run")
