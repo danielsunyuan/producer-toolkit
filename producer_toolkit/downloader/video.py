@@ -4,6 +4,7 @@ import shutil
 import subprocess
 from fractions import Fraction
 from pathlib import Path
+from ..limits import Limits
 
 
 def select_video_formats(context, quality="compatible"):
@@ -66,9 +67,12 @@ def probe_video(path):
     }
 
 
-def prepare_video(source, quality):
+def prepare_video(source, quality, limits=None):
     source = Path(source)
+    limits = limits or Limits()
     before = probe_video(source)
+    limits.check_duration(before["duration"])
+    limits.check_size(source.stat().st_size)
     video_copy = before["video"]["codec_name"] == "h264" and before["video"].get("pix_fmt") == "yuv420p"
     audio_copy = not before["audio"] or before["audio"]["codec_name"] == "aac"
     conversion = {"video": "copy", "audio": "copy" if before["audio"] else "absent",
@@ -77,6 +81,7 @@ def prepare_video(source, quality):
         return source, {"input": before, "output": before, "conversion": conversion}
     if video_copy and audio_copy and source.suffix.lower() == ".mp4" and "mp4" in before["container"]:
         return source, {"input": before, "output": before, "conversion": conversion}
+    limits.check_disk(source.parent, required=source.stat().st_size * 2)
     destination = source.parent / (source.stem + ".compatible.mp4")
     command = [shutil.which("ffmpeg"), "-nostdin", "-v", "error", "-n", "-i", str(source),
                "-map", "0:v:0", "-map", "0:a:0?", "-map_metadata", "0"]
@@ -85,6 +90,7 @@ def prepare_video(source, quality):
     command += ["-c:a", "copy"] if audio_copy else ["-c:a", "aac", "-b:a", "320k"]
     command += ["-movflags", "+faststart", str(destination)]
     subprocess.run(command, check=True)
+    limits.check_size(destination.stat().st_size)
     after = probe_video(destination)
     if after["video"]["codec_name"] != "h264" or (after["audio"] and after["audio"]["codec_name"] != "aac"):
         raise RuntimeError("Conversion did not produce H.264/AAC video.")

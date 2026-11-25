@@ -1,5 +1,6 @@
 """Separate in job-owned storage and publish only complete, verified stems."""
 import json
+import math
 import os
 import subprocess
 import sys
@@ -7,15 +8,19 @@ import tempfile
 from pathlib import Path
 from .. import __version__
 from ..files import publish, output_lock
+from ..limits import Limits
 
 def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None,
-                  analyze_features=True, device="cpu"):
+                  analyze_features=True, device="cpu", limits=None):
     import soundfile as sf
     import numpy as np
     if stem_number not in (2, 4):
         raise ValueError("Demucs supports 2 or 4 stems.")
     source = Path(audio_path).expanduser().resolve(strict=True)
+    limits = limits or Limits()
     original = sf.info(str(source))
+    limits.check_duration(original.duration)
+    limits.check_size(source.stat().st_size)
     if original.frames == 0:
         raise ValueError("Input audio is empty.")
     first = None
@@ -30,6 +35,8 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None,
     if not varying:
         raise ValueError("Input audio is silent or constant after mixing to mono; separation needs a varying signal.")
     destination = Path(output_dir).expanduser().resolve()
+    estimated_stems = math.ceil(original.duration * 44100) * 2 * 4 * stem_number
+    limits.check_disk(destination, required=estimated_stems * 2)
     destination.mkdir(parents=True, exist_ok=True)
     names = ["vocals", "no_vocals"] if stem_number == 2 else ["vocals", "drums", "bass", "other"]
     targets = [destination / (name + ".wav") for name in names] + [destination / "manifest.json"]
@@ -74,6 +81,7 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None,
             created = []
             try:
                 for target in targets:
+                    limits.check_disk(destination, required=(generated / target.name).stat().st_size)
                     created.append(publish(generated / target.name, target))
             except BaseException:
                 for path in created:
