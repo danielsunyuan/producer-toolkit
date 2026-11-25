@@ -56,12 +56,21 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None,
             generated = Path(job) / "htdemucs" / source.stem
             reference = None
             for name in names:
-                metadata = sf.info(str(generated / (name + ".wav")))
+                artifact = generated / (name + ".wav")
+                limits.check_size(artifact.stat().st_size)
+                metadata = sf.info(str(artifact))
                 if metadata.frames == 0 or abs(metadata.duration - original.duration) > 0.05:
                     raise RuntimeError(f"Stem is empty or has wrong duration: {name}")
                 signature = (metadata.frames, metadata.samplerate, metadata.channels)
                 if reference is not None and signature != reference:
                     raise RuntimeError("Stem lengths, sample rates or channel counts do not match.")
+                decoded_frames = 0
+                for block in sf.blocks(str(artifact), blocksize=65536, always_2d=True):
+                    if not np.isfinite(block).all():
+                        raise RuntimeError(f"Stem contains non-finite samples: {name}")
+                    decoded_frames += len(block)
+                if decoded_frames != metadata.frames:
+                    raise RuntimeError(f"Stem could not be fully decoded: {name}")
                 reference = signature
             analysis = {"status": "disabled", "bpm": None, "key": None}
             if analyze_features:
