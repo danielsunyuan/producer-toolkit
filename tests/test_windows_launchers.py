@@ -20,6 +20,8 @@ class WindowsLauncherTests(unittest.TestCase):
         original = Path(__file__).resolve().parents[1] / "scripts" / "windows"
         for name in ("install.bat", "run_toolkit.bat"):
             shutil.copy2(original / name, scripts / name)
+        (self.root / "requirements").mkdir()
+        (self.root / "requirements" / "windows-amd64-py311.txt").write_text("# test fixture\n")
         subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(self.root / ".venv")],
                        check=True, capture_output=True)
         package = self.root / "producer_toolkit"

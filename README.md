@@ -15,12 +15,13 @@ cd producer-toolkit
 python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install .
+python -m pip install --require-hashes -r requirements/macos-arm64-py311.txt
+python -m pip install --no-deps .
 ptk --help
 ptk doctor
 ```
 
-On Linux, install Python 3.11, FFmpeg and Deno using your system's supported installation method, then follow the clone/environment/package steps above.
+These reference dependencies target Apple Silicon macOS. On Linux x86-64 with glibc 2.28+, install Python 3.11, FFmpeg and Deno, then use `requirements/linux-amd64-py311.txt` in the same steps. See [dependency sets](requirements/README.md) for scope and regeneration. General `pip install .` resolves compatible versions for development rather than reproducing a locked configuration.
 
 On Windows, install Python 3.11 and put FFmpeg/ffprobe and Deno or Node 22+ on PATH. From Command Prompt in the cloned repository:
 

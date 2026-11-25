@@ -13,17 +13,19 @@ if errorlevel 1 goto failed
 goto install
 
 :python_on_path
-python -c "import sys; sys.exit(sys.version_info < (3, 11))" >nul 2>&1
+python -c "import sys; sys.exit(sys.version_info[:2] != (3, 11))" >nul 2>&1
 if errorlevel 1 goto missing_python
 python -m venv ".venv"
 if errorlevel 1 goto failed
 
 :install
-".venv\Scripts\python.exe" -c "import sys; sys.exit(sys.version_info < (3, 11))"
+".venv\Scripts\python.exe" -c "import sys; sys.exit(sys.version_info[:2] != (3, 11))"
 if errorlevel 1 goto failed
 ".venv\Scripts\python.exe" -m ensurepip --upgrade
 if errorlevel 1 goto failed
-".venv\Scripts\python.exe" -m pip install .
+".venv\Scripts\python.exe" -m pip install --require-hashes -r requirements\windows-amd64-py311.txt
+if errorlevel 1 goto failed
+".venv\Scripts\python.exe" -m pip install --no-deps .
 if errorlevel 1 goto failed
 ".venv\Scripts\python.exe" -m producer_toolkit --version
 if errorlevel 1 goto failed
@@ -36,7 +38,7 @@ popd
 exit /b 0
 
 :missing_python
-echo Python 3.11 or newer is required. Install Python 3.11 from python.org. 1>&2
+echo Python 3.11 is required for the tested Windows dependency set. Install it from python.org. 1>&2
 popd
 exit /b 1
 
