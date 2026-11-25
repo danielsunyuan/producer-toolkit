@@ -17,7 +17,7 @@ class WindowsLauncherTests(unittest.TestCase):
         self.root = Path(self.workspace.name)
         scripts = self.root / "scripts" / "windows"
         scripts.mkdir(parents=True)
-        original = Path(__file__).resolve().parents[1] / "scripts" / "windows"
+        original = Path(os.environ.get("PTK_SOURCE_ROOT", Path(__file__).resolve().parents[1])) / "scripts" / "windows"
         for name in ("install.bat", "run_toolkit.bat"):
             shutil.copy2(original / name, scripts / name)
         (self.root / "requirements").mkdir()

@@ -1,4 +1,6 @@
-# Producer Toolkit 1.1.1
+# Producer Toolkit 1.2.0.dev0
+
+**Development build.** PTK code is MIT-licensed, but the pretrained Demucs weights have unresolved licensing. See [third-party and model notes](THIRD_PARTY.md) before commercial use or redistribution. No weights or FFmpeg binaries are bundled.
 
 Download reference audio and prepare aligned stems for music production. The canonical command is `ptk`; `u` and `pt` use the same implementation.
 

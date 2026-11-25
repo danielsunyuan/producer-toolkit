@@ -1,3 +1,11 @@
+# 1.2.0.dev0 — unreleased
+
+- Reject silent, constant and non-finite separation inputs before loading the model.
+- Lock reference dependencies, consolidate package metadata and exclude test media from wheels.
+- Publish complete files without clobbering and serialize stem jobs sharing an output folder.
+- Add duration/size/disk-space policies and privacy-safe source references.
+- Verify installed wheels across three platforms and document unresolved model licensing.
+
 # Changelog
 
 ## Unreleased — optional download metadata
