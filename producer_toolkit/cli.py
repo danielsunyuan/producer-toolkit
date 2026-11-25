@@ -4,6 +4,7 @@ import importlib.metadata
 import importlib.util
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -13,7 +14,7 @@ from .limits import Limits, public_message, validate_url
 
 def doctor():
     print(f"PTK {__version__}\nPython: {sys.executable}\nSource: {Path(__file__).resolve().parent}")
-    print(f"FFmpeg: {shutil.which('ffmpeg') or 'MISSING (brew install ffmpeg)'}")
+    print(f"FFmpeg: {shutil.which('ffmpeg') or 'MISSING (install FFmpeg and add it to PATH)'}")
     for name in ("yt-dlp", "yt-dlp-ejs", "demucs", "torch", "torchaudio", "librosa", "soundfile"):
         try:
             version = importlib.metadata.version(name)
@@ -23,7 +24,7 @@ def doctor():
     print(f"YouTube JS runtime: {shutil.which('deno') or shutil.which('node') or 'MISSING (install Deno or Node 22+)'}")
     torch_home = Path(os.environ.get("TORCH_HOME", Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "torch"))
     checkpoint = torch_home / "hub" / "checkpoints" / "955717e8-8726e21a.th"
-    print(f"htdemucs checkpoint: {checkpoint} ({'cached' if checkpoint.is_file() else 'not cached; downloads on first separation'})")
+    print(f"Legacy htdemucs checkpoint: {checkpoint} ({'cached' if checkpoint.is_file() else 'not found; installed Demucs may use a different cache'})")
     print("Diagnostics do not test live downloads or model inference.")
     return 0 if shutil.which("ffmpeg") and all(importlib.util.find_spec(n) for n in ("yt_dlp", "demucs", "soundfile")) else 1
 
@@ -58,7 +59,7 @@ def main(argv=None):
     try:
         limits = Limits(options.max_duration, int(options.max_size_mb * 1024**2), int(options.min_free_mb * 1024**2))
         is_url = urlparse(options.source).scheme in ("http", "https")
-        if is_url:
+        if is_url or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*://", options.source):
             validate_url(options.source)
         local = None if is_url else Path(options.source).expanduser().resolve(strict=True)
         if options.analyze:

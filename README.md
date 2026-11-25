@@ -117,3 +117,9 @@ Publication stages complete files privately, flushes them to disk and links them
 Defaults are one hour (`--max-duration 3600`), 2 GiB per media file/download job (`--max-size-mb 2048`), and a 1 GiB free-space reserve (`--min-free-mb 1024`). Raise limits explicitly for larger work. PTK checks local input and available metadata before expensive work, checks download size/free space during transfer, and checks decoded duration and completed media size before publication. Stem-space estimates include staging and publication copies. These checks are not operating-system quotas; conversions, model caches and other processes can require additional space.
 
 HTTP(S) URLs with embedded usernames/passwords or control characters are rejected. Saved source URLs and download messages remove private query parameters/fragments; a valid YouTube video ID can remain. Local source paths still appear in stem manifests, so review manifests before sharing. PTK is a local tool, not a remotely exposed download service; no hosted-service URL/redirect isolation is claimed.
+
+## Local desktop window
+
+Run `ptk-gui` after installing PTK, or `python -m producer_toolkit.desktop`. Python must include Tk (the Python.org Windows installer includes it; use a Tk-enabled Python build on macOS/Linux).
+
+Choose a source file or enter a URL, select an operation and output folder, then Run. The window uses the same CLI/backend, CPU defaults, validation and output safeguards. It shows live logs, runs one job at a time and preserves existing outputs. This first version has no in-window cancellation: wait for the job to finish before closing. For larger jobs or custom resource limits, use the CLI. It is a Python desktop interface, not a signed standalone application.

@@ -5,6 +5,7 @@ import subprocess
 from fractions import Fraction
 from pathlib import Path
 from ..limits import Limits
+from ..runtime import process_environment
 
 
 def select_video_formats(context, quality="compatible"):
@@ -49,7 +50,7 @@ def probe_video(path):
     if not executable:
         raise RuntimeError("ffprobe is missing; install the full FFmpeg package.")
     result = subprocess.run([executable, "-v", "error", "-show_streams", "-show_format",
-                             "-of", "json", str(path)], check=True, capture_output=True, text=True)
+                             "-of", "json", str(path)], check=True, capture_output=True, text=True, env=process_environment())
     data = json.loads(result.stdout)
     videos = [s for s in data["streams"] if s.get("codec_type") == "video"
               and not s.get("disposition", {}).get("attached_pic")]
@@ -89,7 +90,7 @@ def prepare_video(source, quality, limits=None):
         "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p", "-fps_mode", "passthrough"]
     command += ["-c:a", "copy"] if audio_copy else ["-c:a", "aac", "-b:a", "320k"]
     command += ["-movflags", "+faststart", str(destination)]
-    subprocess.run(command, check=True)
+    subprocess.run(command, check=True, env=process_environment())
     limits.check_size(destination.stat().st_size)
     after = probe_video(destination)
     if after["video"]["codec_name"] != "h264" or (after["audio"] and after["audio"]["codec_name"] != "aac"):

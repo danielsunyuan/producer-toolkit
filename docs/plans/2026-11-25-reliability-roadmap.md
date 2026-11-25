@@ -21,3 +21,7 @@
 ## Verification and delivery
 
 For each stage: red test, smallest fix, focused tests, then relevant regression checks; commit only after passing. Verify real inference separately from mocked tests. Update Notion with actual outcomes and any remaining limitations. Use a reviewable PR for the combined, ordered commits and do not claim a public release or signed installer.
+
+## Outcome
+
+Windows PR #7 merged. Stages 2–7 implemented in ordered commits on codex/reliability-roadmap. macOS and Cronos passed the installed-wheel offline suite, real CPU two/four-stem checks and a real desktop analysis flow. Public CI verifies Linux/macOS/Windows. Commercial/model redistribution remains blocked by upstream weight-licensing uncertainty; a signed standalone installer is outside this development build. A test-output credential incident requires user-side rotation independently of repository checks.

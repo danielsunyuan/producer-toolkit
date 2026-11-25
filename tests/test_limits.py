@@ -82,5 +82,6 @@ class LimitsTests(unittest.TestCase):
             limits = download.call_args.kwargs['limits']
             self.assertEqual((limits.max_duration, limits.max_bytes, limits.reserve_bytes), (30, 10*1024*1024, 0))
             download.reset_mock()
-            self.assertEqual(main(['https://u:p@example.com/video', '-a', '-o', folder]), 1)
-            self.assertEqual(download.call_count, 0)
+            for source in ('https://u:p@example.com/video', 'ftp://u:p@example.com/video'):
+                self.assertEqual(main([source, '-a', '-o', folder]), 1)
+                self.assertEqual(download.call_count, 0)

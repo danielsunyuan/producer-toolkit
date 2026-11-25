@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
+    inputs:
+      model_smoke:
+        description: Run opt-in real CPU inference on generated audio
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -69,6 +74,11 @@ jobs:
           else
             python tests/run_offline.py --installed
           fi
+      - name: Optional real model smoke
+        if: github.event_name == 'workflow_dispatch' && inputs.model_smoke
+        run: |
+          cd "$RUNNER_TEMP"
+          python "$GITHUB_WORKSPACE/tools/smoke_inference.py"
       - name: Record dependency licence metadata
         run: python tools/license_inventory.py license-inventory.json
       - uses: actions/upload-artifact@v4

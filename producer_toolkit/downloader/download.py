@@ -30,7 +30,7 @@ def _download(url, output_path, audio, video_quality="compatible", write_metadat
         validate_url(url)
     import yt_dlp
     if not shutil.which("ffmpeg"):
-        raise RuntimeError("FFmpeg is missing. Install it with: brew install ffmpeg")
+        raise RuntimeError("FFmpeg is missing. Install FFmpeg and add it to PATH; see README installation instructions.")
     suffix = ".wav" if audio else ".mp4"
     target = Path(output_path or Path.home() / "Downloads").expanduser().resolve()
     explicit_file = target.suffix.lower() in ((".wav",) if audio else (".mp4", ".mkv", ".webm", ".mov")) and not target.is_dir()

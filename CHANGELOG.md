@@ -5,6 +5,7 @@
 - Publish complete files without clobbering and serialize stem jobs sharing an output folder.
 - Add duration/size/disk-space policies and privacy-safe source references.
 - Verify installed wheels across three platforms and document unresolved model licensing.
+- Add a local Tk desktop window using the same CLI/backend and restrict media-worker environment inheritance.
 
 # Changelog
 

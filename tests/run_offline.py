@@ -10,7 +10,7 @@ import tempfile
 MODULES = [
     'tests.test_safe_workflow', 'tests.test_audio_analyzer', 'tests.test_video_download',
     'tests.test_input_validation', 'tests.test_packaging', 'tests.test_publication',
-    'tests.test_limits', 'tests.test_windows_launchers',
+    'tests.test_limits', 'tests.test_windows_launchers', 'tests.test_desktop',
 ]
 
 

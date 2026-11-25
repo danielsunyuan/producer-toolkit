@@ -39,6 +39,7 @@ dependencies = [
 
 [project.scripts]
 ptk = "producer_toolkit.cli:main"
+ptk-gui = "producer_toolkit.desktop:main"
 u = "producer_toolkit.cli:main"
 pt = "producer_toolkit.cli:main"
 

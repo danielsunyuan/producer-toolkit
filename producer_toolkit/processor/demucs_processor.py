@@ -1,7 +1,6 @@
 """Separate in job-owned storage and publish only complete, verified stems."""
 import json
 import math
-import os
 import subprocess
 import sys
 import tempfile
@@ -9,6 +8,7 @@ from pathlib import Path
 from .. import __version__
 from ..files import publish, output_lock
 from ..limits import Limits
+from ..runtime import process_environment
 
 def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None,
                   analyze_features=True, device="cpu", limits=None):
@@ -49,7 +49,7 @@ def extract_stems(audio_path, output_dir, stem_number=4, models_dir=None,
             if stem_number == 2:
                 command += ["--two-stems", "vocals"]
             command.append(str(source))
-            environment = os.environ.copy()
+            environment = process_environment()
             if models_dir:
                 environment["TORCH_HOME"] = str(Path(models_dir).expanduser().resolve())
             subprocess.run(command, check=True, env=environment)

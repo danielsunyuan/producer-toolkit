@@ -62,4 +62,4 @@ def public_url(url):
 
 
 def public_message(message):
-    return re.sub(r'https?://[^\s]+', lambda match: public_url(match.group(0)), str(message))
+    return re.sub(r'[A-Za-z][A-Za-z0-9+.-]*://[^\s]+', lambda match: public_url(match.group(0)), str(message))
