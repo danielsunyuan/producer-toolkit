@@ -107,3 +107,5 @@ This project integrates pretrained Demucs models; it does not train a separation
 See [testing instructions](tests/README.md), [verification results](docs/VERIFICATION.md) and [release notes](CHANGELOG.md).
 
 Silent or constant input (including stereo that cancels when mixed to mono) is rejected before model loading. Audio containing NaN or infinity is also rejected. Very quiet, varying audio remains valid; no output files are created for rejected input.
+
+Publication stages complete files privately, flushes them to disk and links them into place without replacing existing paths. This requires a local filesystem supporting hard links (such as APFS, NTFS or ext4). A stem folder is complete only when `manifest.json` is present. One PTK stem job owns a folder at a time. After an abrupt termination, hidden `.ptk-publish-*` files or a `.ptk-lock` may remain; use a fresh output folder, or inspect the recorded owner and confirm the job has stopped before manually removing its private leftovers. PTK does not automatically reclaim another job's files.
