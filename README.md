@@ -20,7 +20,17 @@ ptk --help
 ptk doctor
 ```
 
-On Linux, install Python 3.11, FFmpeg and Deno using your system's supported installation method, then follow the clone/environment/package steps above. Windows has not been verified.
+On Linux, install Python 3.11, FFmpeg and Deno using your system's supported installation method, then follow the clone/environment/package steps above.
+
+On Windows, install Python 3.11 and put FFmpeg/ffprobe and Deno or Node 22+ on PATH. From Command Prompt in the cloned repository:
+
+```bat
+scripts\windows\install.bat
+scripts\windows\run_toolkit.bat --help
+scripts\windows\run_toolkit.bat "C:\Music\song.wav" -s -n 2 -o "C:\Music\PTK"
+```
+
+The installer creates or reuses this checkout's `.venv`, installs PTK and runs diagnostics. It stops on failure and does not change system PATH. The launcher uses that environment and passes all arguments and the CLI exit status through; its defaults match `ptk`. Both scripts return without pausing. Run them from an existing Command Prompt to keep errors visible. Windows 10 CPU regression and generated-audio separation checks have passed; live-site downloads and GPU processing have not been verified on Windows.
 
 Installation registers `ptk`, `u` and `pt`; check for existing commands before installing. The first separation downloads the pretrained htdemucs checkpoint. Processing runs locally; downloads and the initial model fetch require network access.
 

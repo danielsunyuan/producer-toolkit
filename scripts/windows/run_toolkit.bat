@@ -1,38 +1,11 @@
 @echo off
-echo ===============================
-echo Producer Toolkit - Windows Run
-echo ===============================
-echo.
+setlocal EnableExtensions DisableDelayedExpansion
+set "PTK_PYTHON=%~dp0..\..\.venv\Scripts\python.exe"
 
-:: Check if argument is provided
-if "%~1"=="" (
-    echo Usage: run_toolkit.bat "YouTube URL" [options]
-    echo.
-    echo Options:
-    echo  -v    Download video
-    echo  -a    Download audio
-    echo  -s    Extract stems (default)
-    echo  -o    Specify output directory
-    echo  -n    Number of stems (2, 4, or 5)
-    echo.
-    echo Example: run_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
-    echo.
-    pause
+if not exist "%PTK_PYTHON%" (
+    echo PTK is not installed here. Run scripts\windows\install.bat first. 1>&2
     exit /b 1
 )
 
-:: Get the root directory (parent of scripts/windows)
-set "ROOT_DIR=%~dp0..\..\"
-cd "%ROOT_DIR%"
-
-:: If no option is provided, default to stems extraction
-set OPTIONS=-s
-if not "%~2"=="" set OPTIONS=%~2 %~3 %~4 %~5 %~6
-
-:: Run the main script with provided arguments
-python main.py "%~1" %OPTIONS%
-
-echo.
-echo Processing complete!
-echo.
-pause
+"%PTK_PYTHON%" -m producer_toolkit %*
+exit /b %errorlevel%
