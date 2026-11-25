@@ -24,6 +24,10 @@ Real separation requires the pretrained model, downloads it on first use and can
 
 The older `test_integration.py` contains network/model tests and is not part of the offline regression command. Unrestricted test discovery can invoke those expensive operations. No music-quality benchmark or accelerator compatibility is implied by the offline tests.
 
+## Windows batch scripts
+
+On Windows, run `python -m unittest tests.test_windows_launchers -v`. These network-free tests exercise the real batch scripts with a temporary virtual environment and fixture modules for pip and the CLI. They verify argument forwarding, paths with spaces/exclamation marks, failure exit status, environment reuse and installation failure handling. They do not replace a real package-installation check. The tests skip on other platforms.
+
 ## Video regression coverage
 
 `tests.test_video_download` adds synthetic format ladders and generated local FFmpeg fixtures. It checks same-tier H.264 preference, 4K/high-frame-rate fallback without downscaling, best-source selection, real split-stream merging, codec-aware copy/remux/encoding, 4:4:4 conversion, fractional frame rate/duration/audio preservation, originals, output/sidecar collisions, failure cleanup and playlist rejection. Local fixture URLs are enabled only in tests. Both FFmpeg and ffprobe are required for real-media checks; those checks are skipped when unavailable. No live-site or editor-import claim follows from these tests.

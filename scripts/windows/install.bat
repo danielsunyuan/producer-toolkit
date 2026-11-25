@@ -1,42 +1,46 @@
 @echo off
-echo ====================================
-echo Producer Toolkit - Windows Installer
-echo ====================================
-echo.
+setlocal EnableExtensions DisableDelayedExpansion
+pushd "%~dp0..\.." || exit /b 1
 
-:: Check Python installation
-python --version 2>NUL
-if errorlevel 1 (
-    echo Python not found. Please install Python 3.9 or newer.
-    echo Visit: https://www.python.org/downloads/
-    echo.
-    pause
-    exit /b 1
-)
+if exist ".venv\Scripts\python.exe" goto install
+if exist ".venv" goto failed
 
-:: Get the root directory (parent of scripts/windows)
-set "ROOT_DIR=%~dp0..\..\"
-cd "%ROOT_DIR%"
+:: Prefer the tested Python version; fall back to a compatible Python on PATH.
+py -3.11 -c "import sys" >nul 2>&1
+if errorlevel 1 goto python_on_path
+py -3.11 -m venv ".venv"
+if errorlevel 1 goto failed
+goto install
 
-:: Run the installer script
-echo Running installation script...
-python install.py
+:python_on_path
+python -c "import sys; sys.exit(sys.version_info < (3, 11))" >nul 2>&1
+if errorlevel 1 goto missing_python
+python -m venv ".venv"
+if errorlevel 1 goto failed
 
-if errorlevel 0 (
-    echo.
-    echo Installation completed successfully!
-    echo.
-    echo You can now use Producer Toolkit by running:
-    echo python main.py "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
-    echo.
-    echo Or use the provided batch file:
-    echo scripts\windows\run_toolkit.bat "https://www.youtube.com/watch?v=YOUTUBE_ID" -s
-    echo.
-) else (
-    echo.
-    echo Installation encountered some issues.
-    echo Please check the error messages above.
-    echo.
-)
+:install
+".venv\Scripts\python.exe" -c "import sys; sys.exit(sys.version_info < (3, 11))"
+if errorlevel 1 goto failed
+".venv\Scripts\python.exe" -m ensurepip --upgrade
+if errorlevel 1 goto failed
+".venv\Scripts\python.exe" -m pip install .
+if errorlevel 1 goto failed
+".venv\Scripts\python.exe" -m producer_toolkit --version
+if errorlevel 1 goto failed
+".venv\Scripts\python.exe" -m producer_toolkit doctor
+if errorlevel 1 goto failed
 
-pause
+echo Installation completed successfully.
+echo Run scripts\windows\run_toolkit.bat --help to get started.
+popd
+exit /b 0
+
+:missing_python
+echo Python 3.11 or newer is required. Install Python 3.11 from python.org. 1>&2
+popd
+exit /b 1
+
+:failed
+echo PTK setup failed. Check the error above and repair any incomplete .venv before retrying. 1>&2
+popd
+exit /b 1

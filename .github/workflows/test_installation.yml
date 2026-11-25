@@ -56,3 +56,13 @@ jobs:
           ls -la producer_toolkit/downloader/
           ls -la producer_toolkit/processor/
           ls -la producer_toolkit/utils/
+
+  windows-launchers:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify Windows installer and launcher
+        run: python -m unittest tests.test_windows_launchers -v
